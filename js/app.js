@@ -25,6 +25,16 @@ const bindKeydown = (id, handler) => {
   node.addEventListener('keydown', handler);
 };
 
+const debounce = (fn, wait = 250) => {
+  let timer = null;
+  return (...args) => {
+    if (timer) {
+      clearTimeout(timer);
+    }
+    timer = setTimeout(() => fn(...args), wait);
+  };
+};
+
 const initStaticEventBindings = () => {
   bindClick('btn-undo', () => window.undo?.());
   bindClick('btn-redo', () => window.redo?.());
@@ -53,24 +63,22 @@ const initStaticEventBindings = () => {
   const importFile = document.getElementById('import-file');
   importFile?.addEventListener('change', (event) => window.importJSON?.(event));
 
-  bindInput('proj-title', () => {
+  const debouncedGenerateSvg = debounce(() => {
     window.markDirty?.();
     window.generateSVG?.();
-  });
+  }, 200);
 
-  bindInput('proj-date', () => {
-    window.markDirty?.();
-    window.generateSVG?.();
-  });
+  bindInput('proj-title', debouncedGenerateSvg);
+  bindInput('proj-date', debouncedGenerateSvg);
 
-  const onPrimaryInput = () => {
+  const debouncedAutoCalc = debounce(() => {
     window.markDirty?.();
     window.autoCalc?.();
-  };
+  }, 150);
 
-  bindInput('val-total', onPrimaryInput);
-  bindInput('val-approved', onPrimaryInput);
-  bindInput('val-ur', onPrimaryInput);
+  bindInput('val-total', debouncedAutoCalc);
+  bindInput('val-approved', debouncedAutoCalc);
+  bindInput('val-ur', debouncedAutoCalc);
 
   bindKeydown('val-total', (event) => window.preventScroll?.(event));
   bindKeydown('val-approved', (event) => window.preventScroll?.(event));
