@@ -23,6 +23,24 @@ export class Validator {
 
     const remaining = this.calculator.remaining(total, approved);
     const sectionsTotal = this.calculator.sectionsSum(sections);
+    const expectedTotal = approved + underReview + sectionsTotal;
+
+    if (total !== expectedTotal) {
+      errors.push(
+        this.#error(
+          'total',
+          'TOTAL_MISMATCH',
+          'Total drawings must equal approved + remaining (under review + sections).',
+          {
+            total,
+            approved,
+            underReview,
+            sectionsTotal,
+            expectedTotal,
+          },
+        ),
+      );
+    }
 
     if (underReview + sectionsTotal > remaining) {
       errors.push(
