@@ -832,9 +832,30 @@ function loadFromURL(){
   }catch(e){return false;}
 }
 function exitReadonly(){
-  // clear ?shd param and reload as editable
+  if(!sharedVersionData){
+    history.replaceState({},'',location.pathname);
+    location.reload();
+    return;
+  }
+
+  // start clean: remove current user's saved dashboard/versions data
+  localStorage.removeItem('shd_v4');
+  localStorage.removeItem(VER_KEY);
+  localStorage.removeItem('shd_autosave_state');
+
+  // keep incoming shared data as the editable working state
+  applyState(sharedVersionData);
+  renderSections();
+  autoCalc();
+  isReadonly=false;
+
+  document.getElementById('readonly-banner').classList.remove('show');
+  document.querySelectorAll('input,textarea,button.btn-add,button.btn-add-section').forEach(el=>{
+    el.disabled=false;el.style.opacity='';el.style.cursor='';
+  });
+
   history.replaceState({},'',location.pathname);
-  location.reload();
+  toast('Now editing shared data as a fresh workspace','success');
 }
 
 // ══════════════════════════════════════
@@ -1337,17 +1358,23 @@ async function exportPDF(){
     const url=URL.createObjectURL(new Blob([str],{type:'image/svg+xml'}));
     const img=new Image();
     img.onload=()=>{
-      const sc=2,cv=document.createElement('canvas');
-      cv.width=svgEl.viewBox.baseVal.width*sc;
-      cv.height=svgEl.viewBox.baseVal.height*sc;
+      const vb=svgEl.viewBox.baseVal;
+      const srcW=vb&&vb.width?vb.width:(svgEl.clientWidth||1240);
+      const srcH=vb&&vb.height?vb.height:(svgEl.clientHeight||1754);
+      const sc=Math.max(3,Math.ceil((window.devicePixelRatio||1)*2));
+      const cv=document.createElement('canvas');
+      cv.width=Math.round(srcW*sc);
+      cv.height=Math.round(srcH*sc);
       const ctx=cv.getContext('2d');
+      ctx.imageSmoothingEnabled=true;
+      ctx.imageSmoothingQuality='high';
       ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);
       ctx.drawImage(img,0,0,cv.width,cv.height);
       URL.revokeObjectURL(url);
       const {jsPDF}=window.jspdf;
       const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
       const W=210,H=W*(cv.height/cv.width);
-      pdf.addImage(cv.toDataURL('image/jpeg',.95),'JPEG',0,0,W,H);
+      pdf.addImage(cv.toDataURL('image/png'),'PNG',0,0,W,H,undefined,'FAST');
       pdf.save('shd-status.pdf');
       toast('PDF exported!','success');
     };
