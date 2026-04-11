@@ -317,33 +317,33 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
   </div>
   <div class="hdr-right">
     <div class="save-badge"><div class="save-dot" id="save-dot"></div><span id="save-label">Saved</span></div>
-    <button id="btn-undo" class="btn" onclick="undo()" title="Undo (Ctrl+Z)" disabled>↩</button>
-    <button id="btn-redo" class="btn" onclick="redo()" title="Redo (Ctrl+Y)" disabled>↪</button>
-    <button id="manual-save-btn" class="btn btn-primary" onclick="manualSave()" title="Save (Ctrl+S)" style="display:none;padding:5px 11px;">💾 Save</button>
-    <button id="autosave-btn" class="btn" onclick="toggleAutoSave()" title="Toggle auto-save" style="padding:5px 11px;color:var(--green);">⚡ Auto-Save</button>
-    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+    <button id="btn-undo" class="btn" title="Undo (Ctrl+Z)" disabled>↩</button>
+    <button id="btn-redo" class="btn" title="Redo (Ctrl+Y)" disabled>↪</button>
+    <button id="manual-save-btn" class="btn btn-primary" title="Save (Ctrl+S)" style="display:none;padding:5px 11px;">💾 Save</button>
+    <button id="autosave-btn" class="btn" title="Toggle auto-save" style="padding:5px 11px;color:var(--green);">⚡ Auto-Save</button>
+    <div class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">
       <span class="theme-icon" id="theme-icon">🌙</span>
       <span class="theme-label" id="theme-label">Dark</span>
     </div>
-    <button class="btn btn-versions" onclick="openVersionsModal()" style="padding:5px 10px;">🗂 Versions</button>
-    <button class="btn btn-share" onclick="openShareModal()" style="padding:5px 10px;">🔗 Share</button>
-    <button class="btn" onclick="exportJSON()" style="padding:5px 10px;">⬇ JSON</button>
-    <button class="btn" onclick="document.getElementById('import-file').click()" style="padding:5px 10px;">⬆ Import</button>
-    <button class="btn btn-red" onclick="exportPDF()" style="padding:5px 10px;">⬇ PDF</button>
-    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)"/>
+    <button class="btn btn-versions" id="btn-open-versions" style="padding:5px 10px;">🗂 Versions</button>
+    <button class="btn btn-share" id="btn-open-share" style="padding:5px 10px;">🔗 Share</button>
+    <button class="btn" id="btn-export-json" style="padding:5px 10px;">⬇ JSON</button>
+    <button class="btn" id="btn-import-json" style="padding:5px 10px;">⬆ Import</button>
+    <button class="btn btn-red" id="btn-export-pdf" style="padding:5px 10px;">⬇ PDF</button>
+    <input type="file" id="import-file" accept=".json" style="display:none"/>
   </div>
 </header>
 
 <!-- Read-only banner (when opened via shared link) -->
 <div class="readonly-banner" id="readonly-banner">
   <span>👁 View-only mode — shared snapshot</span>
-  <button class="btn btn-versions" onclick="consumeSharedVersion()" style="padding:3px 10px;margin-left:8px;font-size:9px;">📥 Save to My Versions</button>
-  <button class="btn" onclick="exitReadonly()" style="padding:3px 9px;margin-left:4px;font-size:9px;">✏ Edit as New</button>
+  <button class="btn btn-versions" id="btn-consume-shared" style="padding:3px 10px;margin-left:8px;font-size:9px;">📥 Save to My Versions</button>
+  <button class="btn" id="btn-exit-readonly" style="padding:3px 9px;margin-left:4px;font-size:9px;">✏ Edit as New</button>
 </div>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('editor')">⬡ Editor</button>
-  <button class="tab" onclick="switchTab('code')">⟨/⟩ SVG Code</button>
+  <button class="tab active" id="tab-btn-editor">⬡ Editor</button>
+  <button class="tab" id="tab-btn-code">⟨/⟩ SVG Code</button>
 </div>
 
 <div class="app">
@@ -359,10 +359,10 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
         <div class="sec-label">Project Info</div>
         <div class="form-row">
           <div class="form-group full"><label>Title</label>
-            <input type="text" id="proj-title" value="SHOP DRAWING SUBMISSION STATUS" oninput="markDirty();generateSVG();"/>
+            <input type="text" id="proj-title" value="SHOP DRAWING SUBMISSION STATUS"/>
           </div>
           <div class="form-group full"><label>Date / Label</label>
-            <input type="text" id="proj-date" value="2026 Project Status" oninput="markDirty();generateSVG();"/>
+            <input type="text" id="proj-date" value="2026 Project Status"/>
           </div>
         </div>
       </div>
@@ -375,11 +375,11 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
         <div class="stat-grid">
           <div class="stat-card" style="background:linear-gradient(135deg,#1976D2,#1565C0);">
             <div class="s-label">TOTAL DRAWINGS</div>
-            <input type="number" id="val-total" value="1434" oninput="markDirty();autoCalc();" onkeydown="preventScroll(event)"/>
+            <input type="number" id="val-total" value="1434"/>
           </div>
           <div class="stat-card" style="background:linear-gradient(135deg,#43A047,#2E7D32);">
             <div class="s-label">APPROVED ✔</div>
-            <input type="number" id="val-approved" value="1083" oninput="markDirty();autoCalc();" onkeydown="preventScroll(event)"/>
+            <input type="number" id="val-approved" value="1083"/>
           </div>
         </div>
       </div>
@@ -410,7 +410,7 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
         <div class="sec-label">Under Review <span style="font-size:7px;color:var(--amber);margin-left:3px;">always shown</span></div>
         <div class="form-group">
           <label>Count</label>
-          <input type="number" id="val-ur" value="51" oninput="markDirty();autoCalc();" onkeydown="preventScroll(event)"
+          <input type="number" id="val-ur" value="51"
             style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--amber);"/>
         </div>
       </div>
@@ -421,7 +421,7 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
       <div>
         <div class="sec-label">Sections <span style="font-size:7px;color:var(--muted);margin-left:3px;">children of Remaining</span></div>
         <div id="sections-container" style="display:flex;flex-direction:column;gap:7px;"></div>
-        <button class="btn-add-section" onclick="openAddSectionModal()" style="margin-top:7px;">+ Add Section</button>
+        <button class="btn-add-section" id="btn-add-section" style="margin-top:7px;">+ Add Section</button>
       </div>
 
     </div>
@@ -432,8 +432,8 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
     <div class="preview-toolbar">
       <span>SVG PREVIEW — A4 · Remaining is parent of all sections</span>
       <div style="display:flex;gap:5px;">
-        <button class="btn btn-ghost" onclick="downloadSVG()" style="padding:4px 10px;">⬇ SVG</button>
-        <button class="btn btn-primary" onclick="generateSVG()" style="padding:4px 10px;">↻ Refresh</button>
+        <button class="btn btn-ghost" id="btn-download-svg" style="padding:4px 10px;">⬇ SVG</button>
+        <button class="btn btn-primary" id="btn-refresh-svg" style="padding:4px 10px;">↻ Refresh</button>
       </div>
     </div>
     <div class="preview-body">
@@ -478,8 +478,8 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
       <div class="color-picker-row" id="color-picker"></div>
     </div>
     <div class="modal-actions">
-      <button class="btn" onclick="closeModal('modal-overlay')">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmAddSection()">Add</button>
+      <button class="btn" id="btn-cancel-add-section">Cancel</button>
+      <button class="btn btn-primary" id="btn-confirm-add-section">Add</button>
     </div>
   </div>
 </div>
@@ -498,12 +498,12 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
     <!-- Save new version -->
     <div style="display:flex;gap:7px;margin-bottom:14px;">
       <input type="text" id="ver-name-input" placeholder="Version name (e.g. Week 15 Update)…" style="flex:1;"/>
-      <button class="btn btn-primary" onclick="saveVersion()" style="white-space:nowrap;padding:6px 14px;">💾 Save Now</button>
+      <button class="btn btn-primary" id="btn-save-version" style="white-space:nowrap;padding:6px 14px;">💾 Save Now</button>
     </div>
     <!-- Version list -->
     <div id="ver-list" style="overflow-y:auto;display:flex;flex-direction:column;gap:7px;flex:1;min-height:0;padding-right:2px;"></div>
     <div class="modal-actions" style="margin-top:14px;">
-      <button class="btn" onclick="closeModal('versions-modal')">Close</button>
+      <button class="btn" id="btn-close-versions-modal">Close</button>
     </div>
   </div>
 </div>
@@ -518,13 +518,13 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
     <label style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Shareable Link</label>
     <div class="share-url-box" style="display:flex;gap:6px;margin-top:8px;">
       <input type="text" id="share-url-input" readonly style="flex:1;font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);outline:none;"/>
-      <button class="btn btn-primary" onclick="copyShareURL()" style="padding:6px 12px;white-space:nowrap;">Copy</button>
+      <button class="btn btn-primary" id="btn-copy-share-url" style="padding:6px 12px;white-space:nowrap;">Copy</button>
     </div>
     <div style="font-size:9px;color:var(--muted);margin-top:10px;line-height:1.6;background:rgba(255,179,0,.06);border:1px solid rgba(255,179,0,.2);border-radius:6px;padding:8px 10px;">
       <strong style="color:var(--amber);">⚠ Note:</strong> Very large datasets may produce very long URLs. Use JSON export for large transfers.
     </div>
     <div class="modal-actions">
-      <button class="btn" onclick="closeModal('share-modal')">Close</button>
+      <button class="btn" id="btn-close-share-modal">Close</button>
     </div>
   </div>
 </div>
@@ -1406,5 +1406,6 @@ window.addEventListener('load',()=>{
   },200);
 });
 </script>
+<script type="module" src="./js/app.js"></script>
 </body>
 </html>
