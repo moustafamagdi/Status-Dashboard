@@ -9,6 +9,8 @@ export class Renderer {
     this.chart = options.chart ?? null;
     this.unsubscribe = null;
     this.previousState = null;
+    this.lastSvgMetrics = null;
+    this.lastChartPayload = null;
 
     this.nodes = {
       total: this.document.querySelector('[data-stat="total"]'),
@@ -87,13 +89,20 @@ export class Renderer {
       this.#renderSvg(state, remaining);
     }
 
-    if (this.chart && typeof this.chart.update === 'function') {
-      this.chart.update({
-        total: state.total,
-        approved: state.approved,
-        underReview: state.underReview,
-        remaining,
-      });
+    const chartPayload = {
+      total: state.total,
+      approved: state.approved,
+      underReview: state.underReview,
+      remaining,
+    };
+
+    if (
+      this.chart &&
+      typeof this.chart.update === 'function' &&
+      !this.#isEqualPayload(this.lastChartPayload, chartPayload)
+    ) {
+      this.chart.update(chartPayload);
+      this.lastChartPayload = { ...chartPayload };
     }
 
     this.previousState = {
@@ -107,7 +116,12 @@ export class Renderer {
       return;
     }
 
-    node.textContent = String(value);
+    const nextValue = String(value);
+    if (node.textContent === nextValue) {
+      return;
+    }
+
+    node.textContent = nextValue;
   }
 
   #toggleEmptyState(show) {
@@ -115,7 +129,12 @@ export class Renderer {
       return;
     }
 
-    this.nodes.sectionsEmptyState.hidden = !show;
+    const shouldHide = !show;
+    if (this.nodes.sectionsEmptyState.hidden === shouldHide) {
+      return;
+    }
+
+    this.nodes.sectionsEmptyState.hidden = shouldHide;
   }
 
   #renderSvg(state, remaining) {
@@ -127,17 +146,42 @@ export class Renderer {
     const approved = Math.max(0, Number(state.approved) || 0);
     const underReview = Math.max(0, Number(state.underReview) || 0);
 
-    const approvedPercent = total > 0 ? (approved / total) * 100 : 0;
-    const underReviewPercent = total > 0 ? (underReview / total) * 100 : 0;
-    const remainingPercent = total > 0 ? (remaining / total) * 100 : 0;
+    const metrics = {
+      approvedPercent: total > 0 ? (approved / total) * 100 : 0,
+      underReviewPercent: total > 0 ? (underReview / total) * 100 : 0,
+      remainingPercent: total > 0 ? (remaining / total) * 100 : 0,
+      approved,
+      underReview,
+      remaining,
+    };
 
-    this.nodes.svg.style.setProperty('--approved-percent', `${approvedPercent}`);
-    this.nodes.svg.style.setProperty('--under-review-percent', `${underReviewPercent}`);
-    this.nodes.svg.style.setProperty('--remaining-percent', `${remainingPercent}`);
+    if (this.#isEqualPayload(this.lastSvgMetrics, metrics)) {
+      return;
+    }
 
-    this.#setText(this.nodes.svgApproved, approved);
-    this.#setText(this.nodes.svgUnderReview, underReview);
-    this.#setText(this.nodes.svgRemaining, remaining);
+    this.nodes.svg.style.setProperty('--approved-percent', `${metrics.approvedPercent}`);
+    this.nodes.svg.style.setProperty('--under-review-percent', `${metrics.underReviewPercent}`);
+    this.nodes.svg.style.setProperty('--remaining-percent', `${metrics.remainingPercent}`);
+
+    this.#setText(this.nodes.svgApproved, metrics.approved);
+    this.#setText(this.nodes.svgUnderReview, metrics.underReview);
+    this.#setText(this.nodes.svgRemaining, metrics.remaining);
+
+    this.lastSvgMetrics = { ...metrics };
+  }
+
+  #isEqualPayload(left, right) {
+    if (!left || !right) {
+      return false;
+    }
+
+    const leftKeys = Object.keys(left);
+    const rightKeys = Object.keys(right);
+    if (leftKeys.length !== rightKeys.length) {
+      return false;
+    }
+
+    return leftKeys.every((key) => left[key] === right[key]);
   }
 }
 
