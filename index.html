@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SHD Dashboard v4</title>
+<title>SHD Dashboard v5</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -46,20 +46,26 @@ header{
 .logo-sub{font-size:8px;color:var(--muted);letter-spacing:1px;}
 .hdr-right{display:flex;align-items:center;gap:5px;flex-shrink:0;}
 
-/* ── THEME TOGGLE ── */
+/* ── THEME TOGGLE — prominent pill button ── */
 .theme-toggle{
-  width:52px;height:26px;border-radius:13px;position:relative;cursor:pointer;
-  background:var(--card);border:1px solid var(--border);
-  transition:background .25s,border-color .25s;flex-shrink:0;
+  display:flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:20px;cursor:pointer;
+  background:linear-gradient(135deg,#1a1a2e,#16213e);
+  border:1.5px solid rgba(88,166,255,.4);
+  font-size:11px;font-weight:700;color:#58a6ff;
+  letter-spacing:.5px;transition:all .25s;flex-shrink:0;
+  box-shadow:0 0 12px rgba(88,166,255,.15);
 }
-.theme-toggle-knob{
-  position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
-  background:var(--accent);transition:transform .25s,background .25s;
-  display:flex;align-items:center;justify-content:center;font-size:10px;
+[data-theme="light"] .theme-toggle{
+  background:linear-gradient(135deg,#fff8e1,#fffde7);
+  border-color:rgba(255,193,7,.5);color:#f59e0b;
+  box-shadow:0 0 12px rgba(255,193,7,.2);
 }
-[data-theme="light"] .theme-toggle-knob{transform:translateX(26px);}
-.theme-toggle-knob::before{content:'🌙';}
-[data-theme="light"] .theme-toggle-knob::before{content:'☀️';}
+.theme-toggle:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(88,166,255,.3);}
+[data-theme="light"] .theme-toggle:hover{box-shadow:0 4px 16px rgba(255,193,7,.3);}
+.theme-icon{font-size:14px;transition:transform .35s;}
+.theme-toggle:hover .theme-icon{transform:rotate(20deg);}
+.theme-label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
 
 /* ── SAVE BADGE ── */
 .save-badge{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--muted);padding:3px 9px;border-radius:6px;background:var(--card);border:1px solid var(--border);}
@@ -68,15 +74,64 @@ header{
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 
 /* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:5px 11px;border-radius:7px;font-family:'Sora',sans-serif;font-size:10px;font-weight:700;letter-spacing:.8px;cursor:pointer;border:none;transition:all .2s;text-transform:uppercase;white-space:nowrap;}
-.btn-primary{background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:5px 11px;border-radius:7px;font-family:'Sora',sans-serif;font-size:10px;font-weight:700;letter-spacing:.8px;cursor:pointer;border:1px solid transparent;transition:all .2s;text-transform:uppercase;white-space:nowrap;background:var(--card);color:var(--text);border-color:var(--border);}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff!important;border-color:transparent!important;}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(88,166,255,.3);}
-.btn-ghost{background:var(--card);color:var(--text);border:1px solid var(--border);}
-.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
-.btn-red{background:linear-gradient(135deg,#b71c1c,var(--red));color:#fff;}
-.btn-red:hover{transform:translateY(-1px);}
-.btn-share{background:linear-gradient(135deg,#6e40c9,#8b5cf6);color:#fff;}
+.btn-red{background:linear-gradient(135deg,#b71c1c,var(--red));color:#fff!important;border-color:transparent!important;}
+.btn-red:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(229,57,53,.3);}
+.btn-share{background:linear-gradient(135deg,#6e40c9,#8b5cf6);color:#fff!important;border-color:transparent!important;}
 .btn-share:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(139,92,246,.35);}
+.btn-versions{background:linear-gradient(135deg,#0f4c75,#1b6ca8);color:#fff!important;border-color:transparent!important;}
+.btn-versions:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(27,108,168,.35);}
+.btn:disabled{cursor:not-allowed;opacity:.45;}
+
+/* ── ADD SECTION BUTTON — matches theme ── */
+.btn-add-section{
+  width:100%;background:var(--card);
+  border:1px dashed var(--border);
+  color:var(--muted);border-radius:7px;
+  padding:8px;font-size:9px;font-weight:700;
+  cursor:pointer;transition:all .2s;
+  font-family:'Sora',sans-serif;
+  letter-spacing:.5px;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.btn-add-section:hover{color:var(--accent);border-color:var(--accent);background:rgba(88,166,255,.05);}
+
+/* ── ADD ITEM BUTTON ── */
+.btn-add{
+  width:100%;background:transparent;
+  border:1px dashed var(--border);color:var(--muted);
+  border-radius:6px;padding:5px;font-size:9px;font-weight:600;
+  cursor:pointer;transition:all .2s;font-family:'Sora',sans-serif;
+}
+.btn-add:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── VERSIONS PANEL ── */
+.ver-item{
+  display:flex;align-items:center;gap:8px;padding:10px 12px;
+  border-radius:8px;border:1px solid var(--border);
+  background:var(--card);cursor:pointer;transition:all .2s;
+  position:relative;
+}
+.ver-item:hover{border-color:var(--accent);}
+.ver-item.active-ver{border-color:var(--accent);background:rgba(88,166,255,.07);}
+.ver-item.shared-ver{border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.07);}
+.ver-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--muted);}
+.ver-info{flex:1;min-width:0;}
+.ver-name{font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ver-meta{font-size:9px;color:var(--muted);margin-top:1px;font-family:'JetBrains Mono',monospace;}
+.ver-tag{font-size:8px;font-weight:700;padding:1px 6px;border-radius:3px;margin-left:4px;}
+.ver-tag.current{background:rgba(67,160,71,.15);color:var(--green);border:1px solid rgba(67,160,71,.3);}
+.ver-tag.shared{background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid rgba(139,92,246,.3);}
+.ver-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:3px;transition:all .2s;flex-shrink:0;}
+.ver-del:hover{background:rgba(229,57,53,.15);color:var(--red);}
+.ver-load{background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:9px;font-weight:600;padding:3px 8px;border-radius:4px;font-family:'Sora',sans-serif;transition:all .2s;flex-shrink:0;}
+.ver-load:hover{border-color:var(--accent);color:var(--accent);}
+.ver-empty{text-align:center;padding:28px 16px;color:var(--muted);font-size:11px;line-height:1.7;}
+.ver-count-bar{height:3px;border-radius:2px;background:var(--border);margin-top:8px;overflow:hidden;}
+.ver-count-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--blue));transition:width .4s;}
 
 /* ── TABS ── */
 .tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;transition:background .25s;}
@@ -256,23 +311,24 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
   <div class="logo">
     <div class="logo-icon">SD</div>
     <div>
-      <div class="logo-text">SHD DASHBOARD <span style="font-size:8px;color:var(--accent);margin-left:3px;">v4</span></div>
+      <div class="logo-text">SHD DASHBOARD <span style="font-size:8px;color:var(--accent);margin-left:3px;">v5</span></div>
       <div class="logo-sub">Shop Drawing Submission Status</div>
     </div>
   </div>
   <div class="hdr-right">
     <div class="save-badge"><div class="save-dot" id="save-dot"></div><span id="save-label">Saved</span></div>
-    <!-- Undo / Redo -->
-    <button id="btn-undo" class="btn btn-ghost" onclick="undo()" title="Undo (Ctrl+Z)" style="padding:5px 9px;opacity:.4;" disabled>↩</button>
-    <button id="btn-redo" class="btn btn-ghost" onclick="redo()" title="Redo (Ctrl+Y)" style="padding:5px 9px;opacity:.4;" disabled>↪</button>
-    <!-- Manual save (hidden when auto-save ON) -->
-    <button id="manual-save-btn" class="btn btn-ghost" onclick="manualSave()" title="Save (Ctrl+S)" style="display:none;padding:5px 11px;">💾 Save</button>
-    <!-- Auto-save toggle -->
-    <button id="autosave-btn" class="btn btn-ghost" onclick="toggleAutoSave()" title="Toggle auto-save" style="padding:5px 11px;color:var(--green);">Auto-Save: ON</button>
-    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark"></div>
+    <button id="btn-undo" class="btn" onclick="undo()" title="Undo (Ctrl+Z)" disabled>↩</button>
+    <button id="btn-redo" class="btn" onclick="redo()" title="Redo (Ctrl+Y)" disabled>↪</button>
+    <button id="manual-save-btn" class="btn btn-primary" onclick="manualSave()" title="Save (Ctrl+S)" style="display:none;padding:5px 11px;">💾 Save</button>
+    <button id="autosave-btn" class="btn" onclick="toggleAutoSave()" title="Toggle auto-save" style="padding:5px 11px;color:var(--green);">⚡ Auto-Save</button>
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+      <span class="theme-icon" id="theme-icon">🌙</span>
+      <span class="theme-label" id="theme-label">Dark</span>
+    </div>
+    <button class="btn btn-versions" onclick="openVersionsModal()" style="padding:5px 10px;">🗂 Versions</button>
     <button class="btn btn-share" onclick="openShareModal()" style="padding:5px 10px;">🔗 Share</button>
-    <button class="btn btn-ghost" onclick="exportJSON()" style="padding:5px 10px;">⬇ JSON</button>
-    <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()" style="padding:5px 10px;">⬆ Import</button>
+    <button class="btn" onclick="exportJSON()" style="padding:5px 10px;">⬇ JSON</button>
+    <button class="btn" onclick="document.getElementById('import-file').click()" style="padding:5px 10px;">⬆ Import</button>
     <button class="btn btn-red" onclick="exportPDF()" style="padding:5px 10px;">⬇ PDF</button>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)"/>
   </div>
@@ -280,7 +336,9 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
 
 <!-- Read-only banner (when opened via shared link) -->
 <div class="readonly-banner" id="readonly-banner">
-  👁 View-only mode — you're viewing a shared snapshot. <button class="btn btn-ghost" onclick="exitReadonly()" style="padding:3px 9px;margin-left:8px;font-size:9px;">Edit your own copy</button>
+  <span>👁 View-only mode — shared snapshot</span>
+  <button class="btn btn-versions" onclick="consumeSharedVersion()" style="padding:3px 10px;margin-left:8px;font-size:9px;">📥 Save to My Versions</button>
+  <button class="btn" onclick="exitReadonly()" style="padding:3px 9px;margin-left:4px;font-size:9px;">✏ Edit as New</button>
 </div>
 
 <div class="tabs">
@@ -420,29 +478,53 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
       <div class="color-picker-row" id="color-picker"></div>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-overlay')">Cancel</button>
+      <button class="btn" onclick="closeModal('modal-overlay')">Cancel</button>
       <button class="btn btn-primary" onclick="confirmAddSection()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- VERSIONS MODAL -->
+<div class="modal-overlay" id="versions-modal">
+  <div class="modal" style="width:480px;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <h3 style="margin:0;">🗂 Saved Versions</h3>
+      <span id="ver-count-label" style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;"></span>
+    </div>
+    <div class="ver-count-bar"><div class="ver-count-fill" id="ver-count-fill"></div></div>
+    <p style="font-size:10px;color:var(--muted);margin:10px 0 14px;line-height:1.6;">
+      Save named snapshots manually. Max 10 versions. Load any version to restore it as your working session.
+    </p>
+    <!-- Save new version -->
+    <div style="display:flex;gap:7px;margin-bottom:14px;">
+      <input type="text" id="ver-name-input" placeholder="Version name (e.g. Week 15 Update)…" style="flex:1;"/>
+      <button class="btn btn-primary" onclick="saveVersion()" style="white-space:nowrap;padding:6px 14px;">💾 Save Now</button>
+    </div>
+    <!-- Version list -->
+    <div id="ver-list" style="overflow-y:auto;display:flex;flex-direction:column;gap:7px;flex:1;min-height:0;padding-right:2px;"></div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="btn" onclick="closeModal('versions-modal')">Close</button>
     </div>
   </div>
 </div>
 
 <!-- SHARE MODAL -->
 <div class="modal-overlay" id="share-modal">
-  <div class="modal" style="width:420px;">
+  <div class="modal" style="width:440px;">
     <h3>🔗 Share Dashboard</h3>
-    <p style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
-      The current data is encoded into a URL. Anyone with this link can view the dashboard in read-only mode.
+    <p style="font-size:10px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+      Current data is encoded into a shareable URL. The recipient can view it in read-only mode, or <strong style="color:var(--text);">import it into their own Versions</strong>.
     </p>
     <label style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Shareable Link</label>
-    <div class="share-url-box">
-      <input type="text" id="share-url-input" readonly/>
+    <div class="share-url-box" style="display:flex;gap:6px;margin-top:8px;">
+      <input type="text" id="share-url-input" readonly style="flex:1;font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);outline:none;"/>
       <button class="btn btn-primary" onclick="copyShareURL()" style="padding:6px 12px;white-space:nowrap;">Copy</button>
     </div>
-    <div class="share-note">
-      <strong>⚠ Note:</strong> The URL encodes your current data as compressed text. Very large datasets may produce long URLs. Use JSON export/import for full data transfer.
+    <div style="font-size:9px;color:var(--muted);margin-top:10px;line-height:1.6;background:rgba(255,179,0,.06);border:1px solid rgba(255,179,0,.2);border-radius:6px;padding:8px 10px;">
+      <strong style="color:var(--amber);">⚠ Note:</strong> Very large datasets may produce very long URLs. Use JSON export for large transfers.
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('share-modal')">Close</button>
+      <button class="btn" onclick="closeModal('share-modal')">Close</button>
     </div>
   </div>
 </div>
@@ -477,10 +559,18 @@ function toggleTheme(){
   const next=html.getAttribute('data-theme')==='dark'?'light':'dark';
   html.setAttribute('data-theme',next);
   localStorage.setItem('shd_theme',next);
+  updateThemeBtn(next);
 }
 function applyTheme(){
   const t=localStorage.getItem('shd_theme')||'dark';
   document.documentElement.setAttribute('data-theme',t);
+  updateThemeBtn(t);
+}
+function updateThemeBtn(t){
+  const icon=document.getElementById('theme-icon');
+  const lbl=document.getElementById('theme-label');
+  if(icon)icon.textContent=t==='dark'?'🌙':'☀️';
+  if(lbl)lbl.textContent=t==='dark'?'Dark':'Light';
 }
 
 // ══════════════════════════════════════
@@ -630,12 +720,13 @@ function setAutoSave(val){
   localStorage.setItem('shd_autosave',val?'1':'0');
   const btn=document.getElementById('autosave-btn');
   if(btn){
-    btn.textContent=val?'Auto-Save: ON':'Auto-Save: OFF';
+    btn.textContent=val?'⚡ Auto-Save':'💤 Manual Save';
     btn.style.color=val?'var(--green)':'var(--amber)';
+    btn.style.borderColor=val?'rgba(67,160,71,.3)':'rgba(255,179,0,.3)';
   }
   const saveBtn=document.getElementById('manual-save-btn');
   if(saveBtn)saveBtn.style.display=val?'none':'flex';
-  toast(`Auto-save ${val?'enabled':'disabled. Remember to save manually.'}`,val?'success':'info');
+  toast(`Auto-save ${val?'enabled':'disabled — use 💾 Save or Ctrl+S'}`,val?'success':'info');
 }
 function toggleAutoSave(){setAutoSave(!autoSaveEnabled);}
 
@@ -727,10 +818,10 @@ function loadFromURL(){
   try{
     const json=decodeURIComponent(escape(atob(shd)));
     const d=JSON.parse(json);
+    sharedVersionData=d; // store for "Save to My Versions"
     applyState(d);
     isReadonly=true;
     document.getElementById('readonly-banner').classList.add('show');
-    // disable all inputs
     document.querySelectorAll('input,textarea,button.btn-add,button.btn-add-section').forEach(el=>{
       el.disabled=true;el.style.opacity='.6';el.style.cursor='not-allowed';
     });
@@ -1097,20 +1188,130 @@ ${colsSVG}
 }
 
 // ══════════════════════════════════════
+//  VERSIONS SYSTEM (max 10, manual only)
+// ══════════════════════════════════════
+const VER_KEY='shd_versions_v1';
+const VER_MAX=10;
+let sharedVersionData=null; // holds data from URL if in readonly mode
+
+function loadVersions(){
+  try{return JSON.parse(localStorage.getItem(VER_KEY)||'[]');}catch(e){return[];}
+}
+function saveVersions(arr){
+  localStorage.setItem(VER_KEY,JSON.stringify(arr));
+}
+function fmtDate(ts){
+  const d=new Date(ts);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+
+    ' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+function saveVersion(){
+  const name=document.getElementById('ver-name-input').value.trim();
+  if(!name){toast('Enter a version name first','error');return;}
+  const versions=loadVersions();
+  if(versions.length>=VER_MAX){
+    toast(`Max ${VER_MAX} versions reached — delete one first`,'error');
+    renderVersionList();return;
+  }
+  const ver={
+    id:'v'+Date.now(),
+    name,
+    ts:Date.now(),
+    data:collectState()
+  };
+  versions.unshift(ver); // newest first
+  saveVersions(versions);
+  document.getElementById('ver-name-input').value='';
+  renderVersionList();
+  toast(`Version "${name}" saved`,'success');
+}
+function deleteVersion(id){
+  let versions=loadVersions();
+  versions=versions.filter(v=>v.id!==id);
+  saveVersions(versions);
+  renderVersionList();
+  toast('Version deleted','info');
+}
+function loadVersion(id){
+  const versions=loadVersions();
+  const ver=versions.find(v=>v.id===id);
+  if(!ver)return;
+  applyState(ver.data);
+  renderSections();
+  autoCalc();
+  toast(`Loaded: "${ver.name}"`,'success');
+  closeModal('versions-modal');
+}
+function consumeSharedVersion(){
+  // Save the shared data as a new version in localStorage
+  if(!sharedVersionData){toast('No shared data found','error');return;}
+  const name=`Shared — ${fmtDate(Date.now())}`;
+  const versions=loadVersions();
+  if(versions.length>=VER_MAX){
+    toast(`Max ${VER_MAX} versions — delete one first in Versions panel`,'error');
+    return;
+  }
+  versions.unshift({id:'v'+Date.now(),name,ts:Date.now(),data:sharedVersionData,shared:true});
+  saveVersions(versions);
+  toast(`Shared version saved as "${name}". Open Versions to load it.`,'success');
+}
+function renderVersionList(){
+  const versions=loadVersions();
+  const list=document.getElementById('ver-list');
+  const countLabel=document.getElementById('ver-count-label');
+  const fill=document.getElementById('ver-count-fill');
+  if(countLabel)countLabel.textContent=`${versions.length}/${VER_MAX}`;
+  if(fill)fill.style.width=`${(versions.length/VER_MAX)*100}%`;
+  if(!list)return;
+  if(!versions.length){
+    list.innerHTML=`<div class="ver-empty">No saved versions yet.<br/>Type a name above and click <strong>Save Now</strong>.</div>`;
+    return;
+  }
+  list.innerHTML=versions.map((v,i)=>`
+    <div class="ver-item ${v.shared?'shared-ver':''}" title="${v.name}">
+      <div class="ver-dot" style="background:${v.shared?'#8b5cf6':'var(--accent)'};"></div>
+      <div class="ver-info">
+        <div class="ver-name">${esc(v.name)}${i===0?'<span class="ver-tag current">LATEST</span>':''}${v.shared?'<span class="ver-tag shared">SHARED</span>':''}</div>
+        <div class="ver-meta">${fmtDate(v.ts)} · ${v.data.total||0} total, ${v.data.approved||0} approved</div>
+      </div>
+      <button class="ver-load" onclick="loadVersion('${v.id}')">Load</button>
+      <button class="ver-del" onclick="deleteVersion('${v.id}')" title="Delete">✕</button>
+    </div>`).join('');
+}
+function openVersionsModal(){
+  renderVersionList();
+  document.getElementById('versions-modal').classList.add('open');
+}
+
+// ══════════════════════════════════════
 //  EXPORT
 // ══════════════════════════════════════
+function fmtFileDate(){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}`;
+}
 function downloadSVG(){
   const el=document.querySelector('#svg-output svg');if(!el)return;
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([el.outerHTML],{type:'image/svg+xml'}));
-  a.download='shd-status.svg';a.click();
+  a.download=`shd-status_${fmtFileDate()}.svg`;a.click();
   toast('SVG downloaded','info');
 }
 function exportJSON(){
+  const state=collectState();
+  const exportData={
+    ...state,
+    _meta:{
+      exportedAt: new Date().toISOString(),
+      exportedAtLocal: fmtDate(Date.now()),
+      version:'shd-v5'
+    }
+  };
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(collectState(),null,2)],{type:'application/json'}));
-  a.download='shd-data.json';a.click();
-  toast('JSON exported','info');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'}));
+  a.download=`shd-data_${fmtFileDate()}.json`;a.click();
+  toast(`JSON exported with timestamp`,'success');
 }
 function importJSON(e){
   const f=e.target.files[0];if(!f)return;
@@ -1178,10 +1379,11 @@ window.addEventListener('load',()=>{
   // Restore auto-save preference
   const savedAS=localStorage.getItem('shd_autosave');
   autoSaveEnabled=savedAS===null?true:savedAS==='1';
-  const btn=document.getElementById('autosave-btn');
-  if(btn){
-    btn.textContent=autoSaveEnabled?'Auto-Save: ON':'Auto-Save: OFF';
-    btn.style.color=autoSaveEnabled?'var(--green)':'var(--amber)';
+  const asBtn=document.getElementById('autosave-btn');
+  if(asBtn){
+    asBtn.textContent=autoSaveEnabled?'⚡ Auto-Save':'💤 Manual Save';
+    asBtn.style.color=autoSaveEnabled?'var(--green)':'var(--amber)';
+    asBtn.style.borderColor=autoSaveEnabled?'rgba(67,160,71,.3)':'rgba(255,179,0,.3)';
   }
   const saveBtn=document.getElementById('manual-save-btn');
   if(saveBtn)saveBtn.style.display=autoSaveEnabled?'none':'flex';
