@@ -169,8 +169,8 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
 /* ── ADD BUTTONS ── */
 .btn-add{width:100%;background:rgba(88,166,255,.05);border:1px dashed rgba(88,166,255,.2);color:var(--accent);border-radius:6px;padding:5px;font-size:9px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Sora',sans-serif;}
 .btn-add:hover{background:rgba(88,166,255,.1);}
-.btn-add-section{width:100%;background:rgba(128,128,128,.04);border:1px dashed rgba(128,128,128,.15);color:var(--muted);border-radius:7px;padding:7px;font-size:9px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Sora',sans-serif;}
-.btn-add-section:hover{color:var(--text);background:rgba(128,128,128,.08);}
+.btn:disabled{cursor:not-allowed;}
+.btn-autosave-off{color:var(--amber)!important;}
 
 /* ── COLOR PICKER ── */
 .color-picker-row{display:flex;gap:5px;flex-wrap:wrap;}
@@ -220,6 +220,7 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
 .toast.success{border-left:3px solid var(--green);}
 .toast.info{border-left:3px solid var(--accent);}
 .toast.error{border-left:3px solid var(--red);}
+.btn:disabled{cursor:not-allowed;}
 
 /* ── MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;display:none;align-items:center;justify-content:center;}
@@ -261,6 +262,13 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
   </div>
   <div class="hdr-right">
     <div class="save-badge"><div class="save-dot" id="save-dot"></div><span id="save-label">Saved</span></div>
+    <!-- Undo / Redo -->
+    <button id="btn-undo" class="btn btn-ghost" onclick="undo()" title="Undo (Ctrl+Z)" style="padding:5px 9px;opacity:.4;" disabled>↩</button>
+    <button id="btn-redo" class="btn btn-ghost" onclick="redo()" title="Redo (Ctrl+Y)" style="padding:5px 9px;opacity:.4;" disabled>↪</button>
+    <!-- Manual save (hidden when auto-save ON) -->
+    <button id="manual-save-btn" class="btn btn-ghost" onclick="manualSave()" title="Save (Ctrl+S)" style="display:none;padding:5px 11px;">💾 Save</button>
+    <!-- Auto-save toggle -->
+    <button id="autosave-btn" class="btn btn-ghost" onclick="toggleAutoSave()" title="Toggle auto-save" style="padding:5px 11px;color:var(--green);">Auto-Save: ON</button>
     <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark"></div>
     <button class="btn btn-share" onclick="openShareModal()" style="padding:5px 10px;">🔗 Share</button>
     <button class="btn btn-ghost" onclick="exportJSON()" style="padding:5px 10px;">⬇ JSON</button>
@@ -551,17 +559,104 @@ function autoCalc(){
 }
 
 // ══════════════════════════════════════
-//  SAVE / LOAD (localStorage)
+//  UNDO / REDO STACK
+// ══════════════════════════════════════
+const UNDO_LIMIT=50;
+let undoStack=[];
+let redoStack=[];
+let _undoTimer=null;
+
+function snapshotForUndo(){
+  // Debounce: only push if user pauses 400ms
+  clearTimeout(_undoTimer);
+  _undoTimer=setTimeout(()=>{
+    const snap=JSON.stringify(collectState());
+    // Don't push duplicate
+    if(undoStack.length&&undoStack[undoStack.length-1]===snap)return;
+    undoStack.push(snap);
+    if(undoStack.length>UNDO_LIMIT)undoStack.shift();
+    redoStack=[];  // new action clears redo
+    updateUndoUI();
+  },400);
+}
+
+function undo(){
+  if(undoStack.length<2){toast('Nothing to undo','info');return;}
+  const current=undoStack.pop();
+  redoStack.push(current);
+  const prev=undoStack[undoStack.length-1];
+  applyStateAndRender(JSON.parse(prev));
+  updateUndoUI();
+  toast('Undo','info');
+}
+function redo(){
+  if(!redoStack.length){toast('Nothing to redo','info');return;}
+  const next=redoStack.pop();
+  undoStack.push(next);
+  applyStateAndRender(JSON.parse(next));
+  updateUndoUI();
+  toast('Redo','info');
+}
+function updateUndoUI(){
+  const uBtn=document.getElementById('btn-undo');
+  const rBtn=document.getElementById('btn-redo');
+  if(uBtn)uBtn.disabled=undoStack.length<2;
+  if(rBtn)rBtn.disabled=redoStack.length===0;
+  if(uBtn)uBtn.style.opacity=undoStack.length<2?'0.4':'1';
+  if(rBtn)rBtn.style.opacity=redoStack.length===0?'0.4':'1';
+}
+function applyStateAndRender(d){
+  applyState(d);
+  renderSections();
+  autoCalc();
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  const ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo();}
+  if(ctrl&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo();}
+  if(ctrl&&e.key==='s'){e.preventDefault();manualSave();}
+});
+
+// ══════════════════════════════════════
+//  SAVE / LOAD
 // ══════════════════════════════════════
 let isDirty=false;
+let autoSaveEnabled=true;  // default ON
+
+function setAutoSave(val){
+  autoSaveEnabled=val;
+  localStorage.setItem('shd_autosave',val?'1':'0');
+  const btn=document.getElementById('autosave-btn');
+  if(btn){
+    btn.textContent=val?'Auto-Save: ON':'Auto-Save: OFF';
+    btn.style.color=val?'var(--green)':'var(--amber)';
+  }
+  const saveBtn=document.getElementById('manual-save-btn');
+  if(saveBtn)saveBtn.style.display=val?'none':'flex';
+  toast(`Auto-save ${val?'enabled':'disabled. Remember to save manually.'}`,val?'success':'info');
+}
+function toggleAutoSave(){setAutoSave(!autoSaveEnabled);}
+
 function markDirty(){
   if(isReadonly)return;
   isDirty=true;
   document.getElementById('save-dot').className='save-dot dirty';
   document.getElementById('save-label').textContent='Unsaved';
-  clearTimeout(window._st);
-  window._st=setTimeout(saveLocal,1500);
+  snapshotForUndo();
+  if(autoSaveEnabled){
+    clearTimeout(window._st);
+    window._st=setTimeout(saveLocal,1500);
+  }
 }
+
+function manualSave(){
+  if(isReadonly)return;
+  saveLocal();
+  toast('Saved!','success');
+}
+
 function collectState(){
   return{
     title:   document.getElementById('proj-title').value,
@@ -582,6 +677,7 @@ function applyState(d){
 }
 function saveLocal(){
   localStorage.setItem('shd_v4',JSON.stringify(collectState()));
+  isDirty=false;
   document.getElementById('save-dot').className='save-dot';
   document.getElementById('save-label').textContent='Saved';
 }
@@ -592,6 +688,15 @@ function loadLocal(){
     applyState(d);return true;
   }catch(e){return false;}
 }
+
+// Warn before leaving with unsaved changes
+window.addEventListener('beforeunload',e=>{
+  if(isDirty&&!isReadonly&&!autoSaveEnabled){
+    e.preventDefault();
+    e.returnValue='You have unsaved changes. Are you sure you want to leave?';
+    return e.returnValue;
+  }
+});
 
 // ══════════════════════════════════════
 //  SHARE via URL (base64 encoded JSON)
@@ -714,15 +819,31 @@ function isLate(ds){
   return new Date(yr,+p[1]-1,+p[0])<new Date();
 }
 function toggleSec(id){const s=sections.find(x=>x.id===id);if(s)s.open=!s.open;renderSections();}
-function updateSecName(id,v){const s=sections.find(x=>x.id===id);if(s)s.name=v;markDirty();autoCalc();}
+function updateSecName(id,v){
+  const s=sections.find(x=>x.id===id);if(s)s.name=v;
+  markDirty();
+  clearTimeout(window._calcTimer);
+  window._calcTimer=setTimeout(()=>autoCalc(),200);
+}
 function removeSec(id){sections=sections.filter(s=>s.id!==id);renderSections();markDirty();autoCalc();}
 function addItem(id){const s=sections.find(x=>x.id===id);if(s)s.items.push({count:0,label:'New Item',note:'',date:''});renderItems(id);markDirty();autoCalc();}
 function removeItem(id,i){const s=sections.find(x=>x.id===id);if(s)s.items.splice(i,1);renderItems(id);markDirty();autoCalc();}
 function updateItemF(id,i,k,v){
   const s=sections.find(x=>x.id===id);
-  if(s&&s.items[i])s.items[i][k]=k==='count'?+v||0:v;
-  if(k==='count')renderSections();
-  markDirty();autoCalc();
+  if(!s||!s.items[i])return;
+  s.items[i][k]=k==='count'?+v||0:v;
+  // FIX: never re-render DOM while user is typing — only update badge & recalc
+  if(k==='count'){
+    const badge=document.querySelector(`#body-${id} .sec-count-badge`)||
+                 document.querySelector(`.custom-section [data-sid="${id}"] .sec-count-badge`);
+    // Update badge via parent header
+    const header=document.getElementById('body-'+id)?.previousElementSibling;
+    if(header){const b=header.querySelector('.sec-count-badge');if(b)b.textContent=secTotal(s);}
+  }
+  markDirty();
+  // Debounce SVG/calc regeneration so typing is smooth
+  clearTimeout(window._calcTimer);
+  window._calcTimer=setTimeout(()=>autoCalc(),120);
 }
 
 // ══════════════════════════════════════
@@ -1053,6 +1174,18 @@ function switchTab(tab){
 // ══════════════════════════════════════
 window.addEventListener('load',()=>{
   applyTheme();
+
+  // Restore auto-save preference
+  const savedAS=localStorage.getItem('shd_autosave');
+  autoSaveEnabled=savedAS===null?true:savedAS==='1';
+  const btn=document.getElementById('autosave-btn');
+  if(btn){
+    btn.textContent=autoSaveEnabled?'Auto-Save: ON':'Auto-Save: OFF';
+    btn.style.color=autoSaveEnabled?'var(--green)':'var(--amber)';
+  }
+  const saveBtn=document.getElementById('manual-save-btn');
+  if(saveBtn)saveBtn.style.display=autoSaveEnabled?'none':'flex';
+
   // Priority: URL params > localStorage > default
   const fromURL=loadFromURL();
   if(!fromURL){
@@ -1061,6 +1194,14 @@ window.addEventListener('load',()=>{
   }
   renderSections();
   autoCalc();
+
+  // Push initial undo snapshot after first render
+  setTimeout(()=>{
+    const snap=JSON.stringify(collectState());
+    undoStack=[snap];
+    redoStack=[];
+    updateUndoUI();
+  },200);
 });
 </script>
 </body>
