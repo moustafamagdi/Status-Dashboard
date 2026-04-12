@@ -141,8 +141,8 @@ export const initEventBindings = () => {
   bindInput('proj-date', debouncedGenerateSvg);
 
   const debouncedAutoCalc = debounce(() => {
-    safeCall('markDirty', () => window.markDirty?.());
     safeCall('autoCalc', () => window.autoCalc?.());
+    safeCall('markDirty', () => window.markDirty?.());
   }, 150);
 
   bindInput('val-approved', debouncedAutoCalc);
