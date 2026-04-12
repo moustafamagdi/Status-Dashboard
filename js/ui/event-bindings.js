@@ -139,6 +139,7 @@ export const initEventBindings = () => {
 
   bindInput('proj-title', debouncedGenerateSvg);
   bindInput('proj-date', debouncedGenerateSvg);
+  bindInput('proj-contractor', debouncedGenerateSvg);
 
   const debouncedAutoCalc = debounce(() => {
     safeCall('autoCalc', () => window.autoCalc?.());
