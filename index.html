@@ -261,6 +261,7 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
 .calc-formula{font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.15);border-radius:5px;padding:5px 8px;margin-top:2px;line-height:1.7;}
 .auto-tag{font-size:7px;font-weight:700;color:var(--green);background:rgba(67,160,71,.1);border:1px solid rgba(67,160,71,.2);border-radius:3px;padding:1px 5px;margin-left:5px;}
 .error-message{font-size:8px;color:var(--red);background:rgba(229,57,53,.08);border:1px solid rgba(229,57,53,.3);border-radius:4px;padding:4px 6px;margin-top:3px;font-family:'JetBrains Mono',monospace;line-height:1.5;}
+.stat-card .error-message{color:#fff;background:rgba(0,0,0,.28);border-color:rgba(255,255,255,.35);}
 
 /* ── STAT INPUT CARDS ── */
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
@@ -709,7 +710,7 @@ function autoCalc(){
   const total    =approved+remaining;
   const pct      =total>0?((approved/total)*100).toFixed(1):'0.0';
 
-  document.getElementById('val-total').value=total;
+  document.getElementById('val-total').textContent=total;
 
   document.getElementById('disp-remaining').textContent=remaining.toLocaleString();
   document.getElementById('disp-ur').textContent=ur.toLocaleString();
@@ -803,13 +804,20 @@ function manualSave(){
 }
 
 function collectState(){
+  const safeSections=(sections||[]).map(sec=>({
+    ...sec,
+    items:Array.isArray(sec.items)?sec.items.map(item=>({...item})):[],
+  }));
+
   return{
     title:   document.getElementById('proj-title').value,
     date:    document.getElementById('proj-date').value,
     total:  +document.getElementById('val-total').textContent||0,
     approved:+document.getElementById('val-approved').value||0,
     underReview:+document.getElementById('val-ur').value||0,
-    sections
+    selectedColor,
+    isReadonly,
+    sections:safeSections
   };
 }
 function applyState(d){
@@ -818,7 +826,13 @@ function applyState(d){
   document.getElementById('val-total').textContent=d.total   ||0;
   document.getElementById('val-approved').value =d.approved||0;
   document.getElementById('val-ur').value       =d.underReview||d.ur||0;
-  sections=(d.sections||[]).map(s=>({...s,open:false}));
+  selectedColor=d.selectedColor||selectedColor||'red';
+  isReadonly=Boolean(d.isReadonly);
+  sections=(d.sections||[]).map(s=>({
+    ...s,
+    open:Boolean(s.open),
+    items:Array.isArray(s.items)?s.items.map(it=>({...it})):[],
+  }));
 }
 
 /**
@@ -1012,27 +1026,27 @@ function updateSecName(id,v){
   }
   // Schedule autoCalc (triggering Store update via markDirty)
   clearTimeout(window._calcTimer);
-  window._calcTimer=setTimeout(()=>{markDirty();autoCalc();},200);
+  window._calcTimer=setTimeout(()=>{autoCalc();markDirty();},200);
 }
 function removeSec(id){
   sections=sections.filter(s=>s.id!==id);
-  markDirty();
   renderSections();
   autoCalc();
+  markDirty();
 }
 function addItem(id){
   const s=sections.find(x=>x.id===id);
   if(s)s.items.push({count:0,label:'New Item',note:'',date:''});
-  markDirty();
   renderItems(id);
   autoCalc();
+  markDirty();
 }
 function removeItem(id,i){
   const s=sections.find(x=>x.id===id);
   if(s)s.items.splice(i,1);
-  markDirty();
   renderItems(id);
   autoCalc();
+  markDirty();
 }
 function updateItemF(id,i,k,v){
   const s=sections.find(x=>x.id===id);
@@ -1046,10 +1060,9 @@ function updateItemF(id,i,k,v){
     const header=document.getElementById('body-'+id)?.previousElementSibling;
     if(header){const b=header.querySelector('.sec-count-badge');if(b)b.textContent=secTotal(s);}
   }
-  markDirty();
   // Debounce SVG/calc regeneration so typing is smooth
   clearTimeout(window._calcTimer);
-  window._calcTimer=setTimeout(()=>autoCalc(),120);
+  window._calcTimer=setTimeout(()=>{autoCalc();markDirty();},120);
 }
 
 // ══════════════════════════════════════
@@ -1070,10 +1083,10 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 function confirmAddSection(){
   const name=document.getElementById('new-sec-name').value.trim()||'New Section';
   sections.push({id:uid(),name,colorId:selectedColor,open:true,items:[]});
-  markDirty();
   closeModal('modal-overlay');
   renderSections();
   autoCalc();
+  markDirty();
   toast('Section added','info');
 }
 
@@ -1504,7 +1517,7 @@ function importJSON(e){
   r.onload=ev=>{
     try{
       const d=JSON.parse(ev.target.result);
-      applyState(d);renderSections();markDirty();autoCalc();
+      applyState(d);renderSections();autoCalc();markDirty();
       toast('Data imported!','success');
     }catch(err){toast('Invalid JSON','error');}
   };
@@ -1683,6 +1696,5 @@ window.addEventListener('load',async ()=>{
   }
 });
 </script>
-<script type="module" src="./js/app.js"></script>
 </body>
 </html>

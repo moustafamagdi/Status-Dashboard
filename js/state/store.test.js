@@ -1,4 +1,4 @@
-import { createStore } from '../../state/store.js';
+import { createStore } from './store.js';
 
 describe('Store', () => {
   let store;
@@ -41,10 +41,14 @@ describe('Store', () => {
       store.setState({ approved: 75 });
       expect(subscriber).toHaveBeenCalledTimes(1);
       expect(subscriber).toHaveBeenCalledWith({
+        title: '',
+        date: '',
         total: 100,
         approved: 75,
         underReview: 20,
         sections: [],
+        selectedColor: 'red',
+        isReadonly: false,
       });
     });
 
@@ -68,6 +72,23 @@ describe('Store', () => {
       });
       const state = store.getState();
       expect(state.sections[0].items).toHaveLength(1);
+    });
+
+    it('should preserve text fields when updating numeric fields', () => {
+      store = createStore({
+        title: 'My Project',
+        date: 'April 2026',
+        total: 100,
+        approved: 60,
+        underReview: 20,
+        sections: [],
+      });
+
+      store.setState({ approved: 70 });
+      const state = store.getState();
+
+      expect(state.title).toBe('My Project');
+      expect(state.date).toBe('April 2026');
     });
   });
 
@@ -124,7 +145,7 @@ describe('Store', () => {
     it('should handle setState with null values', () => {
       store.setState({ sections: null });
       const state = store.getState();
-      expect(state.sections).toBeNull();
+      expect(state.sections).toEqual([]);
     });
 
     it('should handle multiple rapid setState calls', () => {

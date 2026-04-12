@@ -1,5 +1,5 @@
-import { Validator } from '../validator.js';
-import { Calculator } from '../calculator.js';
+import { Validator } from './validator.js';
+import { Calculator } from './calculator.js';
 
 describe('Validator', () => {
   let validator;
