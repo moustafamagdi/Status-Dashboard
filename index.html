@@ -1259,10 +1259,10 @@ function buildSvgMarkup(state){
         const cfs=it.count>99?6.5:it.count>9?7.5:8.5;
         colsSVG+=`<text x="${ccx}" y="${icy+cfs/2}" text-anchor="middle" fill="#fff" font-size="${cfs}" font-weight="700">${it.count}</text>`;
         const tx=IX+28,mw=IW-32;
-        colsSVG+=`<text x="${tx}" y="${iy+12}" fill="#333" font-size="8" font-weight="600">${esc(trunc(it.label,Math.floor(mw/4.8)))}</text>`;
-        let ly=iy+22;
-        nl.forEach(ln=>{colsSVG+=`<text x="${tx}" y="${ly}" fill="#666" font-size="6.5">${esc(ln)}</text>`;ly+=10;});
-        if(hd)colsSVG+=`<text x="${tx}" y="${ly}" fill="#E65100" font-size="7" font-weight="600">📅 ${esc(it.date)}</text>`;
+        colsSVG+=`<text x="${tx}" y="${iy+12}" fill="#333" font-size="9" font-weight="600">${esc(trunc(it.label,Math.floor(mw/4.8)))}</text>`;
+        let ly=iy+24;
+        nl.forEach(ln=>{colsSVG+=`<text x="${tx}" y="${ly}" fill="#666" font-size="8" font-weight="400">${esc(ln)}</text>`;ly+=11;});
+        if(hd)colsSVG+=`<text x="${tx}" y="${ly}" fill="#E65100" font-size="8" font-weight="600">📅 ${esc(it.date)}</text>`;
         iy+=bh+5;
       });
       if(iy>maxBottom)maxBottom=iy;
@@ -1294,10 +1294,10 @@ function buildSvgMarkup(state){
   </filter>
 </defs>
 <rect width="794" height="${SVG_H}" fill="#ffffff"/>
-<text x="397" y="26" text-anchor="middle" fill="#37474F" font-size="10.5" font-weight="600" letter-spacing="0.8">CONTRACTOR: ${contractor}</text>
-<text x="397" y="44" text-anchor="middle" fill="#1a1a2e" font-size="17" font-weight="700" letter-spacing="1.5">${title}</text>
-<text x="397" y="60" text-anchor="middle" fill="#607D8B" font-size="9.5" font-weight="600">${dateStr}</text>
-<line x1="180" y1="66" x2="614" y2="66" stroke="#1976D2" stroke-width="1.5" opacity="0.3"/>
+<text x="397" y="26" text-anchor="middle" fill="#37474F" font-size="20" font-weight="800" letter-spacing="0.8">${contractor}</text>
+<text x="397" y="48" text-anchor="middle" fill="#1a1a2e" font-size="16" font-weight="700" letter-spacing="1.2">${title}</text>
+<text x="397" y="64" text-anchor="middle" fill="#607D8B" font-size="9.5" font-weight="600">${dateStr}</text>
+<line x1="180" y1="70" x2="614" y2="70" stroke="#1976D2" stroke-width="1.5" opacity="0.3"/>
 
 <!-- TOTAL -->
 <rect x="152" y="82" width="175" height="65" rx="10" fill="url(#totalGrad)" filter="url(#shadow)"/>
