@@ -37,6 +37,7 @@ html{scroll-behavior:smooth;}
 body{
   font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);
   transition:background .25s,color .25s;
+  padding-bottom:30px;
 }
 html.theme-transition,html.theme-transition *{
   transition:background-color .35s ease,color .35s ease,border-color .35s ease,box-shadow .35s ease !important;
@@ -181,7 +182,7 @@ header{
 }
 
 /* ── LAYOUT ── */
-.app{display:flex;height:calc(100vh - 87px);overflow:hidden;}
+.app{display:flex;height:calc(100vh - 117px);overflow:hidden;}
 
 /* Phase 4.2: Mobile layout */
 @media(max-width:1024px){
@@ -189,7 +190,7 @@ header{
 }
 
 @media(max-width:768px){
-  .app{height:calc(100vh - 95px);}
+  .app{height:calc(100vh - 125px);}
 }
 
 /* ── PANEL ── */
@@ -384,6 +385,7 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
   text-align:center;font-size:10px;letter-spacing:.3px;
   padding:6px 10px;background:rgba(0,0,0,.06);color:var(--muted);
   border-top:1px solid var(--border);backdrop-filter:blur(2px);
+  white-space:nowrap;
 }
 </style>
 </head>
@@ -1311,9 +1313,10 @@ function buildSvgMarkup(state){
 <text x="462" y="104" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">APPROVED ✔</text>
 <text x="462" y="131" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${approved.toLocaleString()}</text>
 <!-- Down to Remaining -->
-<line x1="239" y1="147" x2="239" y2="196" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
-<line x1="239" y1="196" x2="${REM_CX-10}" y2="196" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
-<polygon points="${REM_CX-10},192 ${REM_CX},196 ${REM_CX-10},200" fill="#1976D2"/>
+<line x1="239" y1="147" x2="239" y2="176" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<line x1="239" y1="176" x2="${REM_CX}" y2="176" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<line x1="${REM_CX}" y1="176" x2="${REM_CX}" y2="184" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<polygon points="${REM_CX-4},184 ${REM_CX},194 ${REM_CX+4},184" fill="#1976D2"/>
 
 <!-- REMAINING BOX -->
 <rect x="${REM_BOX_X}" y="${REM_Y}" width="${REM_BOX_W}" height="65" rx="10" fill="url(#remainGrad)" filter="url(#shadow)"/>
