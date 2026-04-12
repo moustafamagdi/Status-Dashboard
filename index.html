@@ -727,6 +727,13 @@ function autoCalc(){
       <span class="calc-val" style="color:${palOf(s.colorId).fill};">${secTotal(s).toLocaleString()}</span>
     </div>`).join('');
 
+  if(globalController){
+    const liveValidation=globalController.validate(collectState());
+    displayValidationErrors(liveValidation);
+    const refreshSvgBtn=document.getElementById('btn-refresh-svg');
+    if(refreshSvgBtn)refreshSvgBtn.disabled=!liveValidation.isValid;
+  }
+
   generateSVG();
 }
 
