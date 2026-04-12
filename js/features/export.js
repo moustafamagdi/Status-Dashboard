@@ -78,35 +78,17 @@ export class DataExport {
     const approved = this.#toSafeNumber(source.approved);
     const underReview = this.#toSafeNumber(source.underReview);
     const sections = Array.isArray(source.sections) ? [...source.sections] : [];
-    const sectionsTotal = sections.reduce((sum, section) => {
-      if (!section || !Array.isArray(section.items)) {
-        return sum;
-      }
-
-      return (
-        sum +
-        section.items.reduce((itemSum, item) => {
-          const count = item && typeof item === 'object' ? item.count : item;
-          return itemSum + this.#toSafeNumber(count);
-        }, 0)
-      );
-    }, 0);
-    const remaining = underReview + sectionsTotal;
 
     return {
       contractorName: this.#toSafeString(source.contractorName),
       title: this.#toSafeString(source.title),
       date: this.#toSafeString(source.date),
-      status: {
-        isReadonly: Boolean(source.isReadonly),
-        selectedColor: this.#toSafeString(source.selectedColor || 'red'),
-        remaining,
-        sectionsTotal,
-      },
       total,
       approved,
       underReview,
       sections,
+      selectedColor: this.#toSafeString(source.selectedColor || 'red'),
+      isReadonly: Boolean(source.isReadonly),
     };
   }
 

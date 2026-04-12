@@ -1519,31 +1519,72 @@ function downloadSVG(){
   toast('SVG downloaded','info');
 }
 function exportJSON(){
-  const state=collectState();
-  const exportData={
-    ...state,
-    _meta:{
-      exportedAt: new Date().toISOString(),
-      exportedAtLocal: fmtDate(Date.now()),
-      version:'shd-v5'
-    }
-  };
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'}));
-  a.download=`shd-data_${fmtFileDate()}.json`;a.click();
-  toast(`JSON exported with timestamp`,'success');
+  const state = collectState();
+  const json = globalController
+    ? globalController.exportToJSON(state)
+    : JSON.stringify(
+        {
+          ...state,
+          _meta: {
+            exportedAt: new Date().toISOString(),
+            exportedAtLocal: fmtDate(Date.now()),
+            version: 'shd-v5',
+          },
+        },
+        null,
+        2,
+      );
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+  a.download = `shd-data_${fmtFileDate()}.json`;
+  a.click();
+  toast('JSON exported with timestamp', 'success');
 }
 function importJSON(e){
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    try{
-      const d=JSON.parse(ev.target.result);
-      applyState(d);renderSections();autoCalc();markDirty();
-      toast('Data imported!','success');
-    }catch(err){toast('Invalid JSON','error');}
+  const f = e.target.files[0];
+  if (!f) return;
+
+  const r = new FileReader();
+  r.onload = (ev) => {
+    try {
+      let result;
+
+      if (globalController && typeof globalController.importFromJSON === 'function') {
+        result = globalController.importFromJSON(ev.target.result);
+      } else {
+        const parsed = JSON.parse(ev.target.result);
+        const data = parsed?.data ?? parsed;
+        result = {
+          isValid: true,
+          data,
+          errors: [],
+        };
+      }
+
+      if (!result.isValid) {
+        const message = result.errors?.[0]?.message || 'Invalid JSON';
+        toast(message, 'error');
+        return;
+      }
+
+      if (globalController) {
+        globalController.setState(result.data);
+      } else {
+        applyState(result.data);
+      }
+
+      renderSections();
+      autoCalc();
+      markDirty();
+      toast('Data imported!', 'success');
+    } catch (err) {
+      toast('Invalid JSON', 'error');
+    }
   };
-  r.readAsText(f);e.target.value='';
+
+  r.readAsText(f);
+  e.target.value = '';
 }
 async function exportPDF(){
   reportGeneratedAt=new Date().toISOString();
