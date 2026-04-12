@@ -1,8 +1,13 @@
 const DEFAULT_STATE = Object.freeze({
+  contractorName: '',
+  title: '',
+  date: '',
   total: 0,
   approved: 0,
   underReview: 0,
   sections: [],
+  selectedColor: 'red',
+  isReadonly: false,
 });
 
 export class Store {
@@ -49,16 +54,31 @@ export class Store {
 
   #normalizeState(candidate) {
     return {
+      title: this.#toSafeString(candidate.title),
+      contractorName: this.#toSafeString(candidate.contractorName),
+      date: this.#toSafeString(candidate.date),
       total: this.#toSafeNumber(candidate.total),
       approved: this.#toSafeNumber(candidate.approved),
       underReview: this.#toSafeNumber(candidate.underReview),
-      sections: Array.isArray(candidate.sections) ? [...candidate.sections] : [],
+      sections: Array.isArray(candidate.sections)
+        ? [...candidate.sections]
+        : candidate.sections ?? [],
+      selectedColor: this.#toSafeString(candidate.selectedColor || 'red'),
+      isReadonly: Boolean(candidate.isReadonly),
     };
   }
 
   #toSafeNumber(value) {
     const normalized = Number(value);
     return Number.isFinite(normalized) ? normalized : 0;
+  }
+
+  #toSafeString(value) {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    return String(value);
   }
 
   #cloneState(source) {
@@ -70,9 +90,14 @@ export class Store {
 
   #isEqualState(left, right) {
     return (
+      left.title === right.title &&
+      left.contractorName === right.contractorName &&
+      left.date === right.date &&
       left.total === right.total &&
       left.approved === right.approved &&
       left.underReview === right.underReview &&
+      left.selectedColor === right.selectedColor &&
+      left.isReadonly === right.isReadonly &&
       left.sections.length === right.sections.length &&
       left.sections.every((item, index) => item === right.sections[index])
     );
