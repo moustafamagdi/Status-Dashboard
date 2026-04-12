@@ -34,6 +34,13 @@ export class Calculator {
     }
 
     if (section && typeof section === 'object') {
+      if (Array.isArray(section.items)) {
+        return section.items.reduce((itemSum, item) => {
+          const count = item && typeof item === 'object' ? item.count : item;
+          return itemSum + this.#toNonNegativeNumber(count);
+        }, 0);
+      }
+
       if ('value' in section) {
         return this.#toNonNegativeNumber(section.value);
       }

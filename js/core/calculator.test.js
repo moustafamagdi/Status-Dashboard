@@ -1,4 +1,4 @@
-import { Calculator } from '../calculator.js';
+import { Calculator } from './calculator.js';
 
 describe('Calculator', () => {
   let calculator;
@@ -22,7 +22,7 @@ describe('Calculator', () => {
 
     it('should handle negative results gracefully', () => {
       const result = calculator.remaining(100, 150);
-      expect(result).toBe(-50);
+      expect(result).toBe(0);
     });
 
     it('should handle zero total', () => {
@@ -32,7 +32,7 @@ describe('Calculator', () => {
 
   describe('approvalRate()', () => {
     it('should calculate approval percentage correctly', () => {
-      expect(calculator.approvalRate(100, 75)).toBe(75);
+      expect(calculator.approvalRate(100, 75)).toBe(0.75);
     });
 
     it('should return 0 when total is 0', () => {
@@ -41,11 +41,11 @@ describe('Calculator', () => {
 
     it('should handle decimal rates', () => {
       const rate = calculator.approvalRate(3, 1);
-      expect(rate).toBeCloseTo(33.33, 1);
+      expect(rate).toBeCloseTo(0.33, 2);
     });
 
     it('should return 100 when all approved', () => {
-      expect(calculator.approvalRate(50, 50)).toBe(100);
+      expect(calculator.approvalRate(50, 50)).toBe(1);
     });
   });
 

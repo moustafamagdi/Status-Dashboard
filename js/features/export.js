@@ -74,17 +74,52 @@ export class DataExport {
   }
 
   #normalizeState(source = {}) {
+    const total = this.#toSafeNumber(source.total);
+    const approved = this.#toSafeNumber(source.approved);
+    const underReview = this.#toSafeNumber(source.underReview);
+    const sections = Array.isArray(source.sections) ? [...source.sections] : [];
+    const sectionsTotal = sections.reduce((sum, section) => {
+      if (!section || !Array.isArray(section.items)) {
+        return sum;
+      }
+
+      return (
+        sum +
+        section.items.reduce((itemSum, item) => {
+          const count = item && typeof item === 'object' ? item.count : item;
+          return itemSum + this.#toSafeNumber(count);
+        }, 0)
+      );
+    }, 0);
+    const remaining = underReview + sectionsTotal;
+
     return {
-      total: this.#toSafeNumber(source.total),
-      approved: this.#toSafeNumber(source.approved),
-      underReview: this.#toSafeNumber(source.underReview),
-      sections: Array.isArray(source.sections) ? [...source.sections] : [],
+      title: this.#toSafeString(source.title),
+      date: this.#toSafeString(source.date),
+      status: {
+        isReadonly: Boolean(source.isReadonly),
+        selectedColor: this.#toSafeString(source.selectedColor || 'red'),
+        remaining,
+        sectionsTotal,
+      },
+      total,
+      approved,
+      underReview,
+      sections,
     };
   }
 
   #toSafeNumber(value) {
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric : 0;
+  }
+
+  #toSafeString(value) {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    return String(value);
   }
 
   #error(code, message, meta = {}) {

@@ -21,37 +21,40 @@ export class Validator {
       errors.push(this.#error('approved', 'APPROVED_EXCEEDS_TOTAL', 'Approved cannot be greater than total.'));
     }
 
-    const remaining = this.calculator.remaining(total, approved);
     const sectionsTotal = this.calculator.sectionsSum(sections);
-    const expectedTotal = approved + underReview + sectionsTotal;
+    const allocatedRemaining = underReview + sectionsTotal;
+    const remainingCapacity = this.calculator.remaining(total, approved);
+    const expectedTotal = approved + allocatedRemaining;
 
     if (total !== expectedTotal) {
       errors.push(
         this.#error(
           'total',
           'TOTAL_MISMATCH',
-          'Total drawings must equal approved + remaining (under review + sections).',
+          'Total drawings must equal approved + under review + section totals.',
           {
             total,
             approved,
             underReview,
             sectionsTotal,
+            allocatedRemaining,
             expectedTotal,
           },
         ),
       );
     }
 
-    if (underReview + sectionsTotal > remaining) {
+    if (allocatedRemaining > remainingCapacity) {
       errors.push(
         this.#error(
           'underReview',
           'ALLOCATIONS_EXCEED_REMAINING',
           'Under review and sections total cannot exceed remaining capacity.',
           {
-            remaining,
+            remainingCapacity,
             underReview,
             sectionsTotal,
+            allocatedRemaining,
           },
         ),
       );
