@@ -94,6 +94,7 @@ export class DataExport {
     const remaining = underReview + sectionsTotal;
 
     return {
+      contractorName: this.#toSafeString(source.contractorName),
       title: this.#toSafeString(source.title),
       date: this.#toSafeString(source.date),
       status: {

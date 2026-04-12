@@ -835,6 +835,7 @@ function collectState(){
     underReview:+document.getElementById('val-ur').value||0,
     selectedColor,
     isReadonly,
+    reportTimestamp:reportGeneratedAt,
     sections:safeSections
   };
 }
@@ -847,6 +848,7 @@ function applyState(d){
   document.getElementById('val-ur').value       =d.underReview||d.ur||0;
   selectedColor=d.selectedColor||selectedColor||'red';
   isReadonly=Boolean(d.isReadonly);
+  reportGeneratedAt=d.reportTimestamp||reportGeneratedAt||new Date().toISOString();
   sections=(d.sections||[]).map(s=>({
     ...s,
     open:Boolean(s.open),
@@ -1308,22 +1310,15 @@ function buildSvgMarkup(state){
 <rect x="370" y="82" width="185" height="65" rx="10" fill="url(#approvedGrad)" filter="url(#shadow)"/>
 <text x="462" y="104" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">APPROVED ✔</text>
 <text x="462" y="131" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${approved.toLocaleString()}</text>
-<text x="462" y="72" text-anchor="middle" fill="#2E7D32" font-size="10" font-weight="700">${pct}%</text>
-
-<!-- Remaining label -->
-<text x="584" y="97" fill="#FB8C00" font-size="9" font-weight="600">REMAINING</text>
-<text x="584" y="110" fill="#FB8C00" font-size="8.5" opacity="0.75">${remaining.toLocaleString()} drawings</text>
-<line x1="558" y1="104" x2="580" y2="104" stroke="#FB8C00" stroke-width="1.5" stroke-dasharray="4,2"/>
-
 <!-- Down to Remaining -->
-<line x1="${REM_CX}" y1="147" x2="${REM_CX}" y2="185" stroke="#FB8C00" stroke-width="2"/>
-<polygon points="${REM_CX-4},185 ${REM_CX},195 ${REM_CX+4},185" fill="#FB8C00"/>
+<line x1="239" y1="147" x2="239" y2="196" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<line x1="239" y1="196" x2="${REM_CX-10}" y2="196" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<polygon points="${REM_CX-10},192 ${REM_CX},196 ${REM_CX-10},200" fill="#1976D2"/>
 
 <!-- REMAINING BOX -->
 <rect x="${REM_BOX_X}" y="${REM_Y}" width="${REM_BOX_W}" height="65" rx="10" fill="url(#remainGrad)" filter="url(#shadow)"/>
 <text x="${REM_CX}" y="${REM_Y+20}" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">REMAINING</text>
 <text x="${REM_CX}" y="${REM_Y+47}" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${remaining.toLocaleString()}</text>
-<text x="${REM_CX}" y="${REM_Y+61}" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="7">= Total − Approved</text>
 
 <!-- Remaining → Hub → Children -->
 <line x1="${REM_CX}" y1="${REM_BOTTOM}" x2="${REM_CX}" y2="${HUB_Y}" stroke="#9e9e9e" stroke-width="1.8"/>
@@ -1334,8 +1329,7 @@ ${colsSVG}
 <!-- Progress Bar -->
 <rect x="60" y="${SVG_H-52}" width="674" height="18" rx="9" fill="#f0f0f0" stroke="#ddd" stroke-width="1"/>
 <rect x="60" y="${SVG_H-52}" width="${Math.max(0,pctBar)}" height="18" rx="9" fill="url(#approvedGrad)" opacity="0.92"/>
-<text x="397" y="${SVG_H-40}" text-anchor="middle" fill="${pctBar>200?'#fff':'#555'}" font-size="8.5" font-weight="700">${pct}% APPROVED — ${approved.toLocaleString()} of ${total.toLocaleString()}</text>
-<text x="734" y="${SVG_H-40}" text-anchor="end" fill="#888" font-size="8">Remaining: ${remaining.toLocaleString()}</text>
+<text x="397" y="${SVG_H-40}" text-anchor="middle" fill="${pctBar>200?'#fff':'#555'}" font-size="8.5" font-weight="700">Approved ${approved.toLocaleString()} of ${total.toLocaleString()}</text>
 <text x="774" y="${SVG_H-18}" text-anchor="end" fill="#9E9E9E" font-size="7.5">Export Timestamp: ${exportStamp}</text>
 </svg>`;
 }
@@ -1723,5 +1717,6 @@ window.addEventListener('load',async ()=>{
   }
 });
 </script>
+<div class="site-footer">All rights reserved to Virtual Projects Ltd Development Team — Developed by Mostafa AbdelLatif.</div>
 </body>
 </html>
