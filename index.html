@@ -261,6 +261,7 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
 .calc-formula{font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.15);border-radius:5px;padding:5px 8px;margin-top:2px;line-height:1.7;}
 .auto-tag{font-size:7px;font-weight:700;color:var(--green);background:rgba(67,160,71,.1);border:1px solid rgba(67,160,71,.2);border-radius:3px;padding:1px 5px;margin-left:5px;}
 .error-message{font-size:8px;color:var(--red);background:rgba(229,57,53,.08);border:1px solid rgba(229,57,53,.3);border-radius:4px;padding:4px 6px;margin-top:3px;font-family:'JetBrains Mono',monospace;line-height:1.5;}
+.stat-card .error-message{color:#fff;background:rgba(0,0,0,.28);border-color:rgba(255,255,255,.35);}
 
 /* ── STAT INPUT CARDS ── */
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
@@ -378,6 +379,12 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
   display:none;align-items:center;gap:8px;
 }
 .readonly-banner.show{display:flex;}
+.site-footer{
+  position:fixed;left:0;right:0;bottom:0;z-index:120;
+  text-align:center;font-size:10px;letter-spacing:.3px;
+  padding:6px 10px;background:rgba(0,0,0,.06);color:var(--muted);
+  border-top:1px solid var(--border);backdrop-filter:blur(2px);
+}
 </style>
 </head>
 <body>
@@ -433,6 +440,9 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
       <div>
         <div class="sec-label">Project Info</div>
         <div class="form-row">
+          <div class="form-group full"><label>Contractor Name</label>
+            <input type="text" id="proj-contractor" value="Virtual Projects Ltd"/>
+          </div>
           <div class="form-group full"><label>Title</label>
             <input type="text" id="proj-title" value="SHOP DRAWING SUBMISSION STATUS"/>
           </div>
@@ -694,6 +704,7 @@ let sections=[
 ];
 let selectedColor='red';
 let isReadonly=false;
+let reportGeneratedAt=new Date().toISOString();
 
 function uid(){return 's'+Math.random().toString(36).substr(2,8);}
 function secTotal(s){return s.items.reduce((a,i)=>a+i.count,0);}
@@ -709,7 +720,7 @@ function autoCalc(){
   const total    =approved+remaining;
   const pct      =total>0?((approved/total)*100).toFixed(1):'0.0';
 
-  document.getElementById('val-total').value=total;
+  document.getElementById('val-total').textContent=total;
 
   document.getElementById('disp-remaining').textContent=remaining.toLocaleString();
   document.getElementById('disp-ur').textContent=ur.toLocaleString();
@@ -725,6 +736,13 @@ function autoCalc(){
       <span class="calc-lbl" style="color:${palOf(s.colorId).fill};">└ ${esc(s.name)}</span>
       <span class="calc-val" style="color:${palOf(s.colorId).fill};">${secTotal(s).toLocaleString()}</span>
     </div>`).join('');
+
+  if(globalController){
+    const liveValidation=globalController.validate(collectState());
+    displayValidationErrors(liveValidation);
+    const refreshSvgBtn=document.getElementById('btn-refresh-svg');
+    if(refreshSvgBtn)refreshSvgBtn.disabled=!liveValidation.isValid;
+  }
 
   generateSVG();
 }
@@ -803,22 +821,39 @@ function manualSave(){
 }
 
 function collectState(){
+  const safeSections=(sections||[]).map(sec=>({
+    ...sec,
+    items:Array.isArray(sec.items)?sec.items.map(item=>({...item})):[],
+  }));
+
   return{
+    contractorName:document.getElementById('proj-contractor').value,
     title:   document.getElementById('proj-title').value,
     date:    document.getElementById('proj-date').value,
     total:  +document.getElementById('val-total').textContent||0,
     approved:+document.getElementById('val-approved').value||0,
     underReview:+document.getElementById('val-ur').value||0,
-    sections
+    selectedColor,
+    isReadonly,
+    reportTimestamp:reportGeneratedAt,
+    sections:safeSections
   };
 }
 function applyState(d){
+  document.getElementById('proj-contractor').value=d.contractorName||'';
   document.getElementById('proj-title').value   =d.title   ||'';
   document.getElementById('proj-date').value    =d.date    ||'';
   document.getElementById('val-total').textContent=d.total   ||0;
   document.getElementById('val-approved').value =d.approved||0;
   document.getElementById('val-ur').value       =d.underReview||d.ur||0;
-  sections=(d.sections||[]).map(s=>({...s,open:false}));
+  selectedColor=d.selectedColor||selectedColor||'red';
+  isReadonly=Boolean(d.isReadonly);
+  reportGeneratedAt=d.reportTimestamp||reportGeneratedAt||new Date().toISOString();
+  sections=(d.sections||[]).map(s=>({
+    ...s,
+    open:Boolean(s.open),
+    items:Array.isArray(s.items)?s.items.map(it=>({...it})):[],
+  }));
 }
 
 /**
@@ -1012,27 +1047,27 @@ function updateSecName(id,v){
   }
   // Schedule autoCalc (triggering Store update via markDirty)
   clearTimeout(window._calcTimer);
-  window._calcTimer=setTimeout(()=>{markDirty();autoCalc();},200);
+  window._calcTimer=setTimeout(()=>{autoCalc();markDirty();},200);
 }
 function removeSec(id){
   sections=sections.filter(s=>s.id!==id);
-  markDirty();
   renderSections();
   autoCalc();
+  markDirty();
 }
 function addItem(id){
   const s=sections.find(x=>x.id===id);
   if(s)s.items.push({count:0,label:'New Item',note:'',date:''});
-  markDirty();
   renderItems(id);
   autoCalc();
+  markDirty();
 }
 function removeItem(id,i){
   const s=sections.find(x=>x.id===id);
   if(s)s.items.splice(i,1);
-  markDirty();
   renderItems(id);
   autoCalc();
+  markDirty();
 }
 function updateItemF(id,i,k,v){
   const s=sections.find(x=>x.id===id);
@@ -1046,10 +1081,9 @@ function updateItemF(id,i,k,v){
     const header=document.getElementById('body-'+id)?.previousElementSibling;
     if(header){const b=header.querySelector('.sec-count-badge');if(b)b.textContent=secTotal(s);}
   }
-  markDirty();
   // Debounce SVG/calc regeneration so typing is smooth
   clearTimeout(window._calcTimer);
-  window._calcTimer=setTimeout(()=>autoCalc(),120);
+  window._calcTimer=setTimeout(()=>{autoCalc();markDirty();},120);
 }
 
 // ══════════════════════════════════════
@@ -1070,10 +1104,10 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 function confirmAddSection(){
   const name=document.getElementById('new-sec-name').value.trim()||'New Section';
   sections.push({id:uid(),name,colorId:selectedColor,open:true,items:[]});
-  markDirty();
   closeModal('modal-overlay');
   renderSections();
   autoCalc();
+  markDirty();
   toast('Section added','info');
 }
 
@@ -1147,8 +1181,10 @@ function trunc(s,max){return s&&s.length>max?s.slice(0,max-1)+'…':s;}
  * Phase 2.6: Build SVG markup as pure string (no DOM writes)
  */
 function buildSvgMarkup(state){
+  const contractor=esc(state.contractorName||'Contractor Name');
   const title=esc(state.title||'SHOP DRAWING SUBMISSION STATUS');
   const dateStr=esc(state.date||'2026 Project Status');
+  const exportStamp=esc(fmtDate(new Date(state.reportTimestamp||Date.now()).getTime()));
   const total=+state.total||0;
   const approved=+state.approved||0;
   const ur=+state.underReview||0;
@@ -1256,38 +1292,33 @@ function buildSvgMarkup(state){
   </filter>
 </defs>
 <rect width="794" height="${SVG_H}" fill="#ffffff"/>
+<text x="397" y="26" text-anchor="middle" fill="#37474F" font-size="10.5" font-weight="600" letter-spacing="0.8">CONTRACTOR: ${contractor}</text>
 <text x="397" y="44" text-anchor="middle" fill="#1a1a2e" font-size="17" font-weight="700" letter-spacing="1.5">${title}</text>
-<line x1="180" y1="51" x2="614" y2="51" stroke="#1976D2" stroke-width="1.5" opacity="0.3"/>
+<text x="397" y="60" text-anchor="middle" fill="#607D8B" font-size="9.5" font-weight="600">${dateStr}</text>
+<line x1="180" y1="66" x2="614" y2="66" stroke="#1976D2" stroke-width="1.5" opacity="0.3"/>
 
 <!-- TOTAL -->
-<rect x="152" y="70" width="175" height="65" rx="10" fill="url(#totalGrad)" filter="url(#shadow)"/>
-<text x="239" y="93" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">TOTAL DRAWINGS</text>
-<text x="239" y="120" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${total.toLocaleString()}</text>
+<rect x="152" y="82" width="175" height="65" rx="10" fill="url(#totalGrad)" filter="url(#shadow)"/>
+<text x="239" y="105" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">TOTAL DRAWINGS</text>
+<text x="239" y="132" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${total.toLocaleString()}</text>
 
 <!-- Arrow -->
-<line x1="327" y1="102.5" x2="360" y2="102.5" stroke="#43A047" stroke-width="1.8" stroke-dasharray="5,3"/>
-<polygon points="360,99 368,102.5 360,106" fill="#43A047"/>
+<line x1="327" y1="114.5" x2="360" y2="114.5" stroke="#43A047" stroke-width="1.8" stroke-dasharray="5,3"/>
+<polygon points="360,111 368,114.5 360,118" fill="#43A047"/>
 
 <!-- APPROVED -->
-<rect x="370" y="70" width="185" height="65" rx="10" fill="url(#approvedGrad)" filter="url(#shadow)"/>
-<text x="462" y="92" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">APPROVED ✔</text>
-<text x="462" y="119" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${approved.toLocaleString()}</text>
-<text x="462" y="60" text-anchor="middle" fill="#2E7D32" font-size="10" font-weight="700">${pct}%</text>
-
-<!-- Remaining label -->
-<text x="584" y="85" fill="#FB8C00" font-size="9" font-weight="600">REMAINING</text>
-<text x="584" y="98" fill="#FB8C00" font-size="8.5" opacity="0.75">${remaining.toLocaleString()} drawings</text>
-<line x1="558" y1="92" x2="580" y2="92" stroke="#FB8C00" stroke-width="1.5" stroke-dasharray="4,2"/>
-
+<rect x="370" y="82" width="185" height="65" rx="10" fill="url(#approvedGrad)" filter="url(#shadow)"/>
+<text x="462" y="104" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">APPROVED ✔</text>
+<text x="462" y="131" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${approved.toLocaleString()}</text>
 <!-- Down to Remaining -->
-<line x1="${REM_CX}" y1="135" x2="${REM_CX}" y2="173" stroke="#FB8C00" stroke-width="2"/>
-<polygon points="${REM_CX-4},173 ${REM_CX},183 ${REM_CX+4},173" fill="#FB8C00"/>
+<line x1="239" y1="147" x2="239" y2="196" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<line x1="239" y1="196" x2="${REM_CX-10}" y2="196" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<polygon points="${REM_CX-10},192 ${REM_CX},196 ${REM_CX-10},200" fill="#1976D2"/>
 
 <!-- REMAINING BOX -->
 <rect x="${REM_BOX_X}" y="${REM_Y}" width="${REM_BOX_W}" height="65" rx="10" fill="url(#remainGrad)" filter="url(#shadow)"/>
 <text x="${REM_CX}" y="${REM_Y+20}" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">REMAINING</text>
 <text x="${REM_CX}" y="${REM_Y+47}" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${remaining.toLocaleString()}</text>
-<text x="${REM_CX}" y="${REM_Y+61}" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="7">= Total − Approved</text>
 
 <!-- Remaining → Hub → Children -->
 <line x1="${REM_CX}" y1="${REM_BOTTOM}" x2="${REM_CX}" y2="${HUB_Y}" stroke="#9e9e9e" stroke-width="1.8"/>
@@ -1298,9 +1329,8 @@ ${colsSVG}
 <!-- Progress Bar -->
 <rect x="60" y="${SVG_H-52}" width="674" height="18" rx="9" fill="#f0f0f0" stroke="#ddd" stroke-width="1"/>
 <rect x="60" y="${SVG_H-52}" width="${Math.max(0,pctBar)}" height="18" rx="9" fill="url(#approvedGrad)" opacity="0.92"/>
-<text x="397" y="${SVG_H-40}" text-anchor="middle" fill="${pctBar>200?'#fff':'#555'}" font-size="8.5" font-weight="700">${pct}% APPROVED — ${approved.toLocaleString()} of ${total.toLocaleString()}</text>
-<text x="734" y="${SVG_H-40}" text-anchor="end" fill="#888" font-size="8">Remaining: ${remaining.toLocaleString()}</text>
-<text x="774" y="${SVG_H-18}" text-anchor="end" fill="#bbb" font-size="7.5">Generated: ${dateStr}</text>
+<text x="397" y="${SVG_H-40}" text-anchor="middle" fill="${pctBar>200?'#fff':'#555'}" font-size="8.5" font-weight="700">Approved ${approved.toLocaleString()} of ${total.toLocaleString()}</text>
+<text x="774" y="${SVG_H-18}" text-anchor="end" fill="#9E9E9E" font-size="7.5">Export Timestamp: ${exportStamp}</text>
 </svg>`;
 }
 
@@ -1477,6 +1507,8 @@ function fmtFileDate(){
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}`;
 }
 function downloadSVG(){
+  reportGeneratedAt=new Date().toISOString();
+  generateSVG();
   const el=document.querySelector('#svg-output svg');if(!el)return;
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([el.outerHTML],{type:'image/svg+xml'}));
@@ -1504,13 +1536,15 @@ function importJSON(e){
   r.onload=ev=>{
     try{
       const d=JSON.parse(ev.target.result);
-      applyState(d);renderSections();markDirty();autoCalc();
+      applyState(d);renderSections();autoCalc();markDirty();
       toast('Data imported!','success');
     }catch(err){toast('Invalid JSON','error');}
   };
   r.readAsText(f);e.target.value='';
 }
 async function exportPDF(){
+  reportGeneratedAt=new Date().toISOString();
+  generateSVG();
   toast('Generating PDF…','info');
   const svgEl=document.querySelector('#svg-output svg');
   if(!svgEl){toast('Generate SVG first','error');return;}
@@ -1683,6 +1717,6 @@ window.addEventListener('load',async ()=>{
   }
 });
 </script>
-<script type="module" src="./js/app.js"></script>
+<div class="site-footer">All rights reserved to Virtual Projects Ltd Development Team — Developed by Mostafa AbdelLatif.</div>
 </body>
 </html>
