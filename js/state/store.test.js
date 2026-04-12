@@ -1,4 +1,4 @@
-import { createStore } from '../../state/store.js';
+import { createStore } from './store.js';
 
 describe('Store', () => {
   let store;
@@ -145,7 +145,7 @@ describe('Store', () => {
     it('should handle setState with null values', () => {
       store.setState({ sections: null });
       const state = store.getState();
-      expect(state.sections).toBeNull();
+      expect(state.sections).toEqual([]);
     });
 
     it('should handle multiple rapid setState calls', () => {

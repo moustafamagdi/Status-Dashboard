@@ -709,7 +709,7 @@ function autoCalc(){
   const total    =approved+remaining;
   const pct      =total>0?((approved/total)*100).toFixed(1):'0.0';
 
-  document.getElementById('val-total').value=total;
+  document.getElementById('val-total').textContent=total;
 
   document.getElementById('disp-remaining').textContent=remaining.toLocaleString();
   document.getElementById('disp-ur').textContent=ur.toLocaleString();
@@ -803,13 +803,20 @@ function manualSave(){
 }
 
 function collectState(){
+  const safeSections=(sections||[]).map(sec=>({
+    ...sec,
+    items:Array.isArray(sec.items)?sec.items.map(item=>({...item})):[],
+  }));
+
   return{
     title:   document.getElementById('proj-title').value,
     date:    document.getElementById('proj-date').value,
     total:  +document.getElementById('val-total').textContent||0,
     approved:+document.getElementById('val-approved').value||0,
     underReview:+document.getElementById('val-ur').value||0,
-    sections
+    selectedColor,
+    isReadonly,
+    sections:safeSections
   };
 }
 function applyState(d){
@@ -818,7 +825,13 @@ function applyState(d){
   document.getElementById('val-total').textContent=d.total   ||0;
   document.getElementById('val-approved').value =d.approved||0;
   document.getElementById('val-ur').value       =d.underReview||d.ur||0;
-  sections=(d.sections||[]).map(s=>({...s,open:false}));
+  selectedColor=d.selectedColor||selectedColor||'red';
+  isReadonly=Boolean(d.isReadonly);
+  sections=(d.sections||[]).map(s=>({
+    ...s,
+    open:Boolean(s.open),
+    items:Array.isArray(s.items)?s.items.map(it=>({...it})):[],
+  }));
 }
 
 /**
@@ -1683,6 +1696,5 @@ window.addEventListener('load',async ()=>{
   }
 });
 </script>
-<script type="module" src="./js/app.js"></script>
 </body>
 </html>
