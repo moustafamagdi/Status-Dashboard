@@ -1,5 +1,4 @@
 const DEFAULT_STATE = Object.freeze({
-  contractorName: '',
   title: '',
   date: '',
   total: 0,
@@ -55,7 +54,6 @@ export class Store {
   #normalizeState(candidate) {
     return {
       title: this.#toSafeString(candidate.title),
-      contractorName: this.#toSafeString(candidate.contractorName),
       date: this.#toSafeString(candidate.date),
       total: this.#toSafeNumber(candidate.total),
       approved: this.#toSafeNumber(candidate.approved),
@@ -91,7 +89,6 @@ export class Store {
   #isEqualState(left, right) {
     return (
       left.title === right.title &&
-      left.contractorName === right.contractorName &&
       left.date === right.date &&
       left.total === right.total &&
       left.approved === right.approved &&

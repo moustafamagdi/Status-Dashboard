@@ -41,7 +41,6 @@ describe('Store', () => {
       store.setState({ approved: 75 });
       expect(subscriber).toHaveBeenCalledTimes(1);
       expect(subscriber).toHaveBeenCalledWith({
-        contractorName: '',
         title: '',
         date: '',
         total: 100,
@@ -77,7 +76,6 @@ describe('Store', () => {
 
     it('should preserve text fields when updating numeric fields', () => {
       store = createStore({
-        contractorName: 'Virtual Projects Ltd',
         title: 'My Project',
         date: 'April 2026',
         total: 100,
@@ -89,7 +87,6 @@ describe('Store', () => {
       store.setState({ approved: 70 });
       const state = store.getState();
 
-      expect(state.contractorName).toBe('Virtual Projects Ltd');
       expect(state.title).toBe('My Project');
       expect(state.date).toBe('April 2026');
     });

@@ -835,7 +835,6 @@ function collectState(){
     underReview:+document.getElementById('val-ur').value||0,
     selectedColor,
     isReadonly,
-    reportTimestamp:reportGeneratedAt,
     sections:safeSections
   };
 }
@@ -848,7 +847,6 @@ function applyState(d){
   document.getElementById('val-ur').value       =d.underReview||d.ur||0;
   selectedColor=d.selectedColor||selectedColor||'red';
   isReadonly=Boolean(d.isReadonly);
-  reportGeneratedAt=d.reportTimestamp||reportGeneratedAt||new Date().toISOString();
   sections=(d.sections||[]).map(s=>({
     ...s,
     open:Boolean(s.open),
@@ -1725,6 +1723,5 @@ window.addEventListener('load',async ()=>{
   }
 });
 </script>
-<div class="site-footer">All rights reserved to Virtual Projects Ltd Development Team — Developed by Mostafa AbdelLatif.</div>
 </body>
 </html>
