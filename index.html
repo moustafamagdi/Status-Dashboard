@@ -1660,8 +1660,8 @@ window.addEventListener('load',async ()=>{
 
   // Phase 3.3: Initialize event bindings via dedicated module
   try{
-    const{initDOMEventBindings}=await import('./js/ui/event-bindings.js');
-    initDOMEventBindings();
+    const{initEventBindings}=await import('./js/ui/event-bindings.js');
+    initEventBindings();
   }catch(e){
     console.error('Failed to initialize event bindings:',e);
   }

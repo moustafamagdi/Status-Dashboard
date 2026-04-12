@@ -40,7 +40,7 @@ const initStaticEventBindings = () => {
   bindClick('btn-redo', () => window.redo?.());
   bindClick('manual-save-btn', () => window.manualSave?.());
   bindClick('autosave-btn', () => window.toggleAutoSave?.());
-  bindClick('theme-toggle', () => window.toggleTheme?.());
+  // theme-toggle binding moved to window.load after theme module init
   bindClick('btn-open-versions', () => window.openVersionsModal?.());
   bindClick('btn-open-share', () => window.openShareModal?.());
   bindClick('btn-export-json', () => window.exportJSON?.());
