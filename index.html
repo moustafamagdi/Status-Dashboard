@@ -31,14 +31,46 @@
 
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
-body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);transition:background .25s,color .25s;}
+
+/* Phase 4.1: Theme transition support */
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);
+  transition:background .25s,color .25s;
+}
+html.theme-transition,html.theme-transition *{
+  transition:background-color .35s ease,color .35s ease,border-color .35s ease,box-shadow .35s ease !important;
+}
+
+/* Phase 4.3: Accessibility - Prefers reduced motion */
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
+}
 
 /* ── HEADER ── */
 header{
   background:var(--surface);border-bottom:1px solid var(--border);
-  padding:0 20px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 15px;display:flex;align-items:center;justify-content:space-between;
   height:52px;position:sticky;top:0;z-index:200;
   transition:background .25s,border-color .25s;
+}
+
+/* Phase 4.2: Mobile header responsiveness */
+@media(max-width:768px){
+  header{
+    padding:0 12px;
+    gap:8px;
+  }
+  .logo-text{display:none;}
+  .logo-sub{display:none;}
+  .hdr-right{gap:3px;}
+  .hdr-right>button{padding:4px 8px;font-size:9px;}
+}
+
+@media(max-width:480px){
+  header{
+    height:auto;min-height:52px;flex-wrap:wrap;
+  }
 }
 .logo{display:flex;align-items:center;gap:9px;}
 .logo-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--accent));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
@@ -56,13 +88,15 @@ header{
   letter-spacing:.5px;transition:all .25s;flex-shrink:0;
   box-shadow:0 0 12px rgba(88,166,255,.15);
 }
-[data-theme="light"] .theme-toggle{
-  background:linear-gradient(135deg,#fff8e1,#fffde7);
-  border-color:rgba(255,193,7,.5);color:#f59e0b;
-  box-shadow:0 0 12px rgba(255,193,7,.2);
-}
 .theme-toggle:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(88,166,255,.3);}
-[data-theme="light"] .theme-toggle:hover{box-shadow:0 4px 16px rgba(255,193,7,.3);}
+.theme-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* Phase 4.2: Mobile theme toggle */
+@media(max-width:768px){
+  .theme-toggle{
+    padding:4px 10px;font-size:10px;gap:4px;
+  }
+}
 .theme-icon{font-size:14px;transition:transform .35s;}
 .theme-toggle:hover .theme-icon{transform:rotate(20deg);}
 .theme-label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
@@ -138,9 +172,25 @@ header{
 .tab{padding:10px 16px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .tab:hover:not(.active){color:var(--text);}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-4px;}
+
+/* Phase 4.2: Mobile tabs */
+@media(max-width:768px){
+  .tabs{padding:0 12px;}
+  .tab{padding:8px 12px;font-size:9px;letter-spacing:.5px;}
+}
 
 /* ── LAYOUT ── */
 .app{display:flex;height:calc(100vh - 87px);overflow:hidden;}
+
+/* Phase 4.2: Mobile layout */
+@media(max-width:1024px){
+  .app{flex-direction:column;}
+}
+
+@media(max-width:768px){
+  .app{height:calc(100vh - 95px);}
+}
 
 /* ── PANEL ── */
 .panel{
@@ -151,9 +201,33 @@ header{
   overscroll-behavior:contain;
   transition:background .25s,border-color .25s;
 }
+
+/* Phase 4.2: Mobile panel */
+@media(max-width:1024px){
+  .panel{
+    width:100%;
+    min-width:100%;
+    border-right:none;
+    border-bottom:1px solid var(--border);
+    max-height:50vh;
+  }
+}
+
+@media(max-width:768px){
+  .panel{
+    max-height:45vh;
+    padding-bottom:10px;
+  }
+}
+
 .panel::-webkit-scrollbar{width:3px;}
 .panel::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:3px;}
 .panel-body{padding:16px;display:flex;flex-direction:column;gap:12px;}
+
+/* Phase 4.2: Responsive panel padding */
+@media(max-width:768px){
+  .panel-body{padding:12px;gap:10px;}
+}
 
 /* ── SECTION LABEL ── */
 .sec-label{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--border);}
@@ -186,6 +260,7 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
 .calc-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;}
 .calc-formula{font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.15);border-radius:5px;padding:5px 8px;margin-top:2px;line-height:1.7;}
 .auto-tag{font-size:7px;font-weight:700;color:var(--green);background:rgba(67,160,71,.1);border:1px solid rgba(67,160,71,.2);border-radius:3px;padding:1px 5px;margin-left:5px;}
+.error-message{font-size:8px;color:var(--red);background:rgba(229,57,53,.08);border:1px solid rgba(229,57,53,.3);border-radius:4px;padding:4px 6px;margin-top:3px;font-family:'JetBrains Mono',monospace;line-height:1.5;}
 
 /* ── STAT INPUT CARDS ── */
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
@@ -337,8 +412,8 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
 <!-- Read-only banner (when opened via shared link) -->
 <div class="readonly-banner" id="readonly-banner">
   <span>👁 View-only mode — shared snapshot</span>
-  <button class="btn btn-versions" id="btn-consume-shared" style="padding:3px 10px;margin-left:8px;font-size:9px;">📥 Save to My Versions</button>
-  <button class="btn" id="btn-exit-readonly" style="padding:3px 9px;margin-left:4px;font-size:9px;">✏ Edit as New</button>
+  <button class="btn btn-versions" id="btn-consume-shared" style="padding:3px 10px;margin-left:8px;font-size:9px;display:none;">📥 Save to My Versions</button>
+  <button class="btn" id="btn-exit-readonly" style="padding:3px 9px;margin-left:4px;font-size:9px;display:none;">✏ Edit as New</button>
 </div>
 
 <div class="tabs">
@@ -375,11 +450,13 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
         <div class="stat-grid">
           <div class="stat-card" style="background:linear-gradient(135deg,#1976D2,#1565C0);">
             <div class="s-label">TOTAL DRAWINGS</div>
-            <input type="number" id="val-total" value="1434" min="0" step="1"/>
+            <div id="val-total" style="background:transparent;border:none;color:#fff;font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1.1;padding:0;">1434</div>
+            <div id="err-total" class="error-message" style="display:none;"></div>
           </div>
           <div class="stat-card" style="background:linear-gradient(135deg,#43A047,#2E7D32);">
             <div class="s-label">APPROVED ✔</div>
             <input type="number" id="val-approved" value="1083" min="0" step="1"/>
+            <div id="err-approved" class="error-message" style="display:none;"></div>
           </div>
         </div>
       </div>
@@ -412,6 +489,7 @@ textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
           <label>Count</label>
           <input type="number" id="val-ur" value="51" min="0" step="1"
             style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--amber);"/>
+          <div id="err-ur" class="error-message" style="display:none;"></div>
         </div>
       </div>
 
@@ -652,56 +730,30 @@ function autoCalc(){
 }
 
 // ══════════════════════════════════════
-//  UNDO / REDO STACK
+//  UNDO / REDO (Phase 2.5: handled by UndoManager)
 // ══════════════════════════════════════
-const UNDO_LIMIT=50;
-let undoStack=[];
-let redoStack=[];
-let _undoTimer=null;
-
-function snapshotForUndo(){
-  // Debounce: only push if user pauses 400ms
-  clearTimeout(_undoTimer);
-  _undoTimer=setTimeout(()=>{
-    const snap=JSON.stringify(collectState());
-    // Don't push duplicate
-    if(undoStack.length&&undoStack[undoStack.length-1]===snap)return;
-    undoStack.push(snap);
-    if(undoStack.length>UNDO_LIMIT)undoStack.shift();
-    redoStack=[];  // new action clears redo
-    updateUndoUI();
-  },400);
-}
-
 function undo(){
-  if(undoStack.length<2){toast('Nothing to undo','info');return;}
-  const current=undoStack.pop();
-  redoStack.push(current);
-  const prev=undoStack[undoStack.length-1];
-  applyStateAndRender(JSON.parse(prev));
+  if(!globalController||!globalController.undo()){toast('Nothing to undo','info');return;}
+  renderSections();
+  autoCalc();
   updateUndoUI();
   toast('Undo','info');
 }
 function redo(){
-  if(!redoStack.length){toast('Nothing to redo','info');return;}
-  const next=redoStack.pop();
-  undoStack.push(next);
-  applyStateAndRender(JSON.parse(next));
+  if(!globalController||!globalController.redo()){toast('Nothing to redo','info');return;}
+  renderSections();
+  autoCalc();
   updateUndoUI();
   toast('Redo','info');
 }
 function updateUndoUI(){
   const uBtn=document.getElementById('btn-undo');
   const rBtn=document.getElementById('btn-redo');
-  if(uBtn)uBtn.disabled=undoStack.length<2;
-  if(rBtn)rBtn.disabled=redoStack.length===0;
-  if(uBtn)uBtn.style.opacity=undoStack.length<2?'0.4':'1';
-  if(rBtn)rBtn.style.opacity=redoStack.length===0?'0.4':'1';
-}
-function applyStateAndRender(d){
-  applyState(d);
-  renderSections();
-  autoCalc();
+  if(!globalController)return;
+  if(uBtn)uBtn.disabled=!globalController.canUndo();
+  if(rBtn)rBtn.disabled=!globalController.canRedo();
+  if(uBtn)uBtn.style.opacity=globalController.canUndo()?'1':'0.4';
+  if(rBtn)rBtn.style.opacity=globalController.canRedo()?'1':'0.4';
 }
 
 // Keyboard shortcuts
@@ -738,16 +790,15 @@ function markDirty(){
   isDirty=true;
   document.getElementById('save-dot').className='save-dot dirty';
   document.getElementById('save-label').textContent='Unsaved';
-  snapshotForUndo();
-  if(autoSaveEnabled){
-    clearTimeout(window._st);
-    window._st=setTimeout(saveLocal,1500);
+  // FIX: Update Store to trigger autosave and undo manager
+  if(globalController){
+    globalController.setState(collectState());
   }
 }
 
 function manualSave(){
   if(isReadonly)return;
-  saveLocal();
+  if(globalController)globalController.saveNow();
   toast('Saved!','success');
 }
 
@@ -755,33 +806,46 @@ function collectState(){
   return{
     title:   document.getElementById('proj-title').value,
     date:    document.getElementById('proj-date').value,
-    total:  +document.getElementById('val-total').value   ||0,
+    total:  +document.getElementById('val-total').textContent||0,
     approved:+document.getElementById('val-approved').value||0,
-    ur:     +document.getElementById('val-ur').value      ||0,
+    underReview:+document.getElementById('val-ur').value||0,
     sections
   };
 }
 function applyState(d){
   document.getElementById('proj-title').value   =d.title   ||'';
   document.getElementById('proj-date').value    =d.date    ||'';
-  document.getElementById('val-total').value    =d.total   ||0;
+  document.getElementById('val-total').textContent=d.total   ||0;
   document.getElementById('val-approved').value =d.approved||0;
-  document.getElementById('val-ur').value       =d.ur      ||0;
+  document.getElementById('val-ur').value       =d.underReview||d.ur||0;
   sections=(d.sections||[]).map(s=>({...s,open:false}));
 }
-function saveLocal(){
-  localStorage.setItem('shd_v4',JSON.stringify(collectState()));
-  isDirty=false;
-  document.getElementById('save-dot').className='save-dot';
-  document.getElementById('save-label').textContent='Saved';
+
+/**
+ * Phase 2.3: Display validation errors for inputs
+ */
+function displayValidationErrors(validationResult){
+  const errorMap={'total':'#err-total','approved':'#err-approved','underReview':'#err-ur'};
+  // Clear all errors first
+  Object.values(errorMap).forEach(id=>{
+    const el=document.querySelector(id);
+    if(el){el.style.display='none';el.textContent='';}
+  });
+  // Show new errors
+  if(validationResult.errors&&validationResult.errors.length>0){
+    validationResult.errors.forEach(err=>{
+      const errId=errorMap[err.field];
+      if(errId){
+        const errEl=document.querySelector(errId);
+        if(errEl){
+          errEl.textContent=err.message;
+          errEl.style.display='block';
+        }
+      }
+    });
+  }
 }
-function loadLocal(){
-  try{
-    const d=JSON.parse(localStorage.getItem('shd_v4')||'{}');
-    if(!d.title)return false;
-    applyState(d);return true;
-  }catch(e){return false;}
-}
+// FIX: saveLocal/loadLocal removed — Autosave handles this via the Store
 
 // Warn before leaving with unsaved changes
 window.addEventListener('beforeunload',e=>{
@@ -825,6 +889,9 @@ function loadFromURL(){
     applyState(d);
     isReadonly=true;
     document.getElementById('readonly-banner').classList.add('show');
+    // Show the readonly action buttons
+    document.getElementById('btn-consume-shared').style.display='flex';
+    document.getElementById('btn-exit-readonly').style.display='flex';
     document.querySelectorAll('input,textarea,button.btn-add,button.btn-add-section').forEach(el=>{
       el.disabled=true;el.style.opacity='.6';el.style.cursor='not-allowed';
     });
@@ -850,6 +917,7 @@ function exitReadonly(){
   isReadonly=false;
 
   document.getElementById('readonly-banner').classList.remove('show');
+  // FIX: iterate freshly-rendered DOM, not stale pre-render snapshot
   document.querySelectorAll('input,textarea,button.btn-add,button.btn-add-section').forEach(el=>{
     el.disabled=false;el.style.opacity='';el.style.cursor='';
   });
@@ -936,13 +1004,36 @@ function isLate(ds){
 function toggleSec(id){const s=sections.find(x=>x.id===id);if(s)s.open=!s.open;renderSections();}
 function updateSecName(id,v){
   const s=sections.find(x=>x.id===id);if(s)s.name=v;
-  markDirty();
+  // Update badge only, don't re-render during typing
+  const header=document.querySelector(`.custom-section-header[onclick*="'${id}'"]`)?.closest('.custom-section')?.querySelector('.custom-section-header');
+  if(header){
+    const badge=header.querySelector('.sec-count-badge');
+    if(badge)badge.textContent=secTotal(s);
+  }
+  // Schedule autoCalc (triggering Store update via markDirty)
   clearTimeout(window._calcTimer);
-  window._calcTimer=setTimeout(()=>autoCalc(),200);
+  window._calcTimer=setTimeout(()=>{markDirty();autoCalc();},200);
 }
-function removeSec(id){sections=sections.filter(s=>s.id!==id);renderSections();markDirty();autoCalc();}
-function addItem(id){const s=sections.find(x=>x.id===id);if(s)s.items.push({count:0,label:'New Item',note:'',date:''});renderItems(id);markDirty();autoCalc();}
-function removeItem(id,i){const s=sections.find(x=>x.id===id);if(s)s.items.splice(i,1);renderItems(id);markDirty();autoCalc();}
+function removeSec(id){
+  sections=sections.filter(s=>s.id!==id);
+  markDirty();
+  renderSections();
+  autoCalc();
+}
+function addItem(id){
+  const s=sections.find(x=>x.id===id);
+  if(s)s.items.push({count:0,label:'New Item',note:'',date:''});
+  markDirty();
+  renderItems(id);
+  autoCalc();
+}
+function removeItem(id,i){
+  const s=sections.find(x=>x.id===id);
+  if(s)s.items.splice(i,1);
+  markDirty();
+  renderItems(id);
+  autoCalc();
+}
 function updateItemF(id,i,k,v){
   const s=sections.find(x=>x.id===id);
   if(!s||!s.items[i])return;
@@ -979,7 +1070,10 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 function confirmAddSection(){
   const name=document.getElementById('new-sec-name').value.trim()||'New Section';
   sections.push({id:uid(),name,colorId:selectedColor,open:true,items:[]});
-  closeModal('modal-overlay');renderSections();markDirty();autoCalc();
+  markDirty();
+  closeModal('modal-overlay');
+  renderSections();
+  autoCalc();
   toast('Section added','info');
 }
 
@@ -987,7 +1081,7 @@ function confirmAddSection(){
 //  DONUT CHART
 // ══════════════════════════════════════
 function updateChart(){
-  const total    =+document.getElementById('val-total').value   ||0;
+  const total    =+document.getElementById('val-total').textContent||0;
   const approved =+document.getElementById('val-approved').value||0;
   const ur       =+document.getElementById('val-ur').value      ||0;
   const pct=total>0?((approved/total)*100).toFixed(1):'0.0';
@@ -1034,7 +1128,7 @@ function updateChart(){
 }
 
 // ══════════════════════════════════════
-//  SVG GENERATOR
+//  SVG GENERATOR (Phase 2.6: Split into focused functions)
 // ══════════════════════════════════════
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function wrap(s,max){
@@ -1049,19 +1143,21 @@ function wrap(s,max){
 }
 function trunc(s,max){return s&&s.length>max?s.slice(0,max-1)+'…':s;}
 
-function generateSVG(){
-  updateChart();
-
-  const title    =esc(document.getElementById('proj-title').value  ||'SHOP DRAWING SUBMISSION STATUS');
-  const dateStr  =esc(document.getElementById('proj-date').value   ||'2026 Project Status');
-  const total    =+document.getElementById('val-total').value      ||0;
-  const approved =+document.getElementById('val-approved').value   ||0;
-  const ur       =+document.getElementById('val-ur').value         ||0;
-  const secSum   =sections.reduce((a,s)=>a+secTotal(s),0);
+/**
+ * Phase 2.6: Build SVG markup as pure string (no DOM writes)
+ */
+function buildSvgMarkup(state){
+  const title=esc(state.title||'SHOP DRAWING SUBMISSION STATUS');
+  const dateStr=esc(state.date||'2026 Project Status');
+  const total=+state.total||0;
+  const approved=+state.approved||0;
+  const ur=+state.underReview||0;
+  const secSum=sections.reduce((a,s)=>a+secTotal(s),0);
   const remaining=ur+secSum;
-  const pct      =total>0?((approved/total)*100).toFixed(1):'0.0';
-  const pctBar   =total>0?Math.min(674,Math.round((approved/total)*674)):0;
+  const pct=total>0?((approved/total)*100).toFixed(1):'0.0';
+  const pctBar=total>0?Math.min(674,Math.round((approved/total)*674)):0;
 
+  // Build gradients for sections
   let defs='';
   sections.forEach(s=>{
     const p=palOf(s.colorId);
@@ -1140,7 +1236,7 @@ function generateSVG(){
   const SVG_H=Math.max(maxBottom+90,580);
   const hubLine=N>1?`<line x1="${HUB_L}" y1="${HUB_Y}" x2="${HUB_R}" y2="${HUB_Y}" stroke="#9e9e9e" stroke-width="1.5"/>`:'';
 
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 ${SVG_H}" width="210mm" font-family="'Segoe UI',Arial,sans-serif">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 ${SVG_H}" width="210mm" font-family="'Segoe UI',Arial,sans-serif">
 <defs>
   ${defs}
   <linearGradient id="totalGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -1206,9 +1302,74 @@ ${colsSVG}
 <text x="734" y="${SVG_H-40}" text-anchor="end" fill="#888" font-size="8">Remaining: ${remaining.toLocaleString()}</text>
 <text x="774" y="${SVG_H-18}" text-anchor="end" fill="#bbb" font-size="7.5">Generated: ${dateStr}</text>
 </svg>`;
+}
 
-  document.getElementById('svg-output').innerHTML=svg;
-  document.getElementById('svg-code-text').textContent=svg;
+/**
+ * Phase 2.6: Mount SVG to DOM
+ */
+function mountSvg(markup){
+  document.getElementById('svg-output').innerHTML=markup;
+  document.getElementById('svg-code-text').textContent=markup;
+}
+
+/**
+ * Phase 2.6: Update chart widget (donut + bar charts)
+ */
+function updateChartWidget(){
+  const total=+document.getElementById('val-total').textContent||0;
+  const approved=+document.getElementById('val-approved').value||0;
+  const ur=+document.getElementById('val-ur').value||0;
+  const pct=total>0?((approved/total)*100).toFixed(1):'0.0';
+  document.getElementById('donut-pct').textContent=pct+'%';
+
+  const slices=[
+    {label:'Approved',val:approved,fill:'#43A047'},
+    {label:'Under Review',val:ur,fill:'#FFB300'},
+    ...sections.map(s=>({label:s.name,val:secTotal(s),fill:palOf(s.colorId).fill})),
+  ];
+  const sum=slices.reduce((a,s)=>a+s.val,0)||1;
+  const R=54,r=32,cx=70,cy=70;
+  let svg=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(128,128,128,.08)" stroke-width="${R-r}"/>`;
+  let ang=-Math.PI/2;
+  slices.forEach(sl=>{
+    if(sl.val<=0)return;
+    const da=(sl.val/sum)*Math.PI*2,end=ang+da;
+    const x1=cx+R*Math.cos(ang),y1=cy+R*Math.sin(ang);
+    const x2=cx+R*Math.cos(end),y2=cy+R*Math.sin(end);
+    const xi=cx+r*Math.cos(end),yi=cy+r*Math.sin(end);
+    const xj=cx+r*Math.cos(ang),yj=cy+r*Math.sin(ang);
+    const lg=da>Math.PI?1:0;
+    svg+=`<path d="M${x1},${y1} A${R},${R} 0 ${lg},1 ${x2},${y2} L${xi},${yi} A${r},${r} 0 ${lg},0 ${xj},${yj} Z" fill="${sl.fill}" opacity=".9"/>`;
+    ang=end;
+  });
+  document.getElementById('donut-svg').innerHTML=svg;
+  document.getElementById('legend-list').innerHTML=slices.map(sl=>`
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${sl.fill};"></div>
+      <span class="legend-name" title="${esc(sl.label)}">${esc(sl.label)}</span>
+      <span class="legend-val">${sl.val.toLocaleString()}</span>
+      <span class="legend-pct">${((sl.val/sum)*100).toFixed(0)}%</span>
+    </div>`).join('');
+  document.getElementById('bar-list').innerHTML=slices.map(sl=>`
+    <div class="bar-item">
+      <div class="bar-info">
+        <span class="bar-name">${esc(sl.label)}</span>
+        <span class="bar-num" style="color:${sl.fill};">${sl.val}</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${Math.round((sl.val/sum)*100)}%;background:${sl.fill};"></div>
+      </div>
+    </div>`).join('');
+}
+
+/**
+ * Phase 2.6: Unified generateSVG() calls buildSvgMarkup() and mountSvg()
+ */
+function generateSVG(){
+  const state=collectState();
+  const markup=buildSvgMarkup(state);
+  updateChartWidget();
+  mountSvg(markup);
 }
 
 // ══════════════════════════════════════
@@ -1354,6 +1515,9 @@ async function exportPDF(){
   const svgEl=document.querySelector('#svg-output svg');
   if(!svgEl){toast('Generate SVG first','error');return;}
   try{
+    // FIX: Await fonts to be loaded before rasterizing
+    await document.fonts.ready;
+    
     const str=new XMLSerializer().serializeToString(svgEl);
     const url=URL.createObjectURL(new Blob([str],{type:'image/svg+xml'}));
     const img=new Image();
@@ -1403,8 +1567,104 @@ function switchTab(tab){
 // ══════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════
-window.addEventListener('load',()=>{
-  applyTheme();
+// ══════════════════════════════════════
+//  STORE INTEGRATION (Phase 2.1)
+// ══════════════════════════════════════
+let globalController=null;
+
+window.addEventListener('load',async ()=>{
+  // Phase 4.1: Initialize theme management module
+  try{
+    const{initTheme,toggleTheme:themeToggle}=await import('./js/ui/theme.js');
+    initTheme();
+    // Expose toggleTheme for button clicks
+    window.toggleTheme=themeToggle;
+  }catch(e){
+    console.error('Failed to initialize theme manager:',e);
+    // Fallback to inline theme functions if module fails
+    const t=localStorage.getItem('shd_theme')||'dark';
+    document.documentElement.setAttribute('data-theme',t);
+  }
+
+  // Phase 3.4 & 3.5: Initialize error boundaries and loading states
+  try{
+    const{initErrorBoundaries}=await import('./js/core/error-boundary.js');
+    const{initLoadingStateUI}=await import('./js/core/loading-state.js');
+    initErrorBoundaries();
+    initLoadingStateUI();
+  }catch(e){
+    console.error('Failed to initialize error boundaries:',e);
+  }
+
+  // Initialize Store and all modules
+  try{
+    const{initialize}=await import('./js/core/init.js');
+    
+    // Load from localStorage if available
+    let savedState=null;
+    try{
+      const saved=localStorage.getItem('shd_v4');
+      if(saved)savedState=JSON.parse(saved);
+    }catch(e){}
+
+    // Priority: URL params > localStorage > default
+    let initialState=savedState||{};
+    const fromURL=loadFromURL();
+    if(fromURL){
+      // loadFromURL() populates sharedVersionData; don't load from localStorage
+      initialState=sharedVersionData||{};
+    }
+
+    globalController=initialize(initialState,{
+      autosaveKey:'shd_v4',
+      autosaveDebounceMs:1500,
+      onAutosaveStatus:(status)=>{
+        // Eventually update UI with autosave status
+        if(status.label==='Saved'){
+          isDirty=false;
+          document.getElementById('save-dot').className='save-dot';
+          document.getElementById('save-label').textContent='Saved';
+        }else if(status.label==='Saving...'){
+          document.getElementById('save-dot').className='save-dot dirty';
+          document.getElementById('save-label').textContent='Unsaved';
+        }
+      }
+    });
+
+    // Subscribe to Store changes — sync back to inline script state and validate
+    globalController.subscribeToState((newState)=>{
+      // Update global vars from Store for compatibility
+      sections=newState.sections||[];
+      selectedColor=newState.selectedColor||'red';
+      isReadonly=newState.isReadonly||false;
+      if(!fromURL)applyState(newState);// Don't re-apply URL state to inline vars
+
+      // Phase 2.3: Validate and display errors
+      const validationResult=globalController.validate(newState);
+      displayValidationErrors(validationResult);
+      
+      // Disable refresh SVG button if validation fails
+      const refreshSvgBtn=document.getElementById('btn-refresh-svg');
+      if(refreshSvgBtn)refreshSvgBtn.disabled=!validationResult.isValid;
+    });
+
+    // Apply initial state to DOM
+    const state=globalController.getState();
+    applyState(state);
+    renderSections();
+    autoCalc();
+
+  }catch(e){
+    console.error('Failed to initialize Store:',e);
+  }
+
+  // Phase 3.3: Initialize event bindings via dedicated module
+  try{
+    const{initDOMEventBindings}=await import('./js/ui/event-bindings.js');
+    initDOMEventBindings();
+  }catch(e){
+    console.error('Failed to initialize event bindings:',e);
+  }
 
   // Restore auto-save preference
   const savedAS=localStorage.getItem('shd_autosave');
@@ -1418,22 +1678,9 @@ window.addEventListener('load',()=>{
   const saveBtn=document.getElementById('manual-save-btn');
   if(saveBtn)saveBtn.style.display=autoSaveEnabled?'none':'flex';
 
-  // Priority: URL params > localStorage > default
-  const fromURL=loadFromURL();
   if(!fromURL){
-    const fromLocal=loadLocal();
-    if(fromLocal)toast('Session restored','success');
+    toast('Session restored','success');
   }
-  renderSections();
-  autoCalc();
-
-  // Push initial undo snapshot after first render
-  setTimeout(()=>{
-    const snap=JSON.stringify(collectState());
-    undoStack=[snap];
-    redoStack=[];
-    updateUndoUI();
-  },200);
 });
 </script>
 <script type="module" src="./js/app.js"></script>

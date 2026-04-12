@@ -76,17 +76,14 @@ const initStaticEventBindings = () => {
     window.autoCalc?.();
   }, 150);
 
-  bindInput('val-total', debouncedAutoCalc);
   bindInput('val-approved', debouncedAutoCalc);
   bindInput('val-ur', debouncedAutoCalc);
 
-  bindKeydown('val-total', (event) => window.preventScroll?.(event));
   bindKeydown('val-approved', (event) => window.preventScroll?.(event));
   bindKeydown('val-ur', (event) => window.preventScroll?.(event));
 };
 
 const enforceNumericBoundaries = () => {
-  const totalInput = document.getElementById('val-total');
   const approvedInput = document.getElementById('val-approved');
   const underReviewInput = document.getElementById('val-ur');
   const newSectionCountInput = document.getElementById('new-sec-count');
@@ -99,32 +96,16 @@ const enforceNumericBoundaries = () => {
     }
   };
 
-  const syncApprovedMax = () => {
-    if (!totalInput || !approvedInput) return;
-    const total = Math.max(0, Number(totalInput.value) || 0);
-    approvedInput.max = String(total);
-    if ((Number(approvedInput.value) || 0) > total) {
-      approvedInput.value = String(total);
-    }
-  };
-
-  [totalInput, approvedInput, underReviewInput, newSectionCountInput].forEach((node) => {
+  [approvedInput, underReviewInput, newSectionCountInput].forEach((node) => {
     if (!node) return;
     node.addEventListener('blur', () => coerceMinZero(node));
   });
 
-  totalInput?.addEventListener('input', () => {
-    coerceMinZero(totalInput);
-    syncApprovedMax();
-  });
   approvedInput?.addEventListener('input', () => {
     coerceMinZero(approvedInput);
-    syncApprovedMax();
   });
   underReviewInput?.addEventListener('input', () => coerceMinZero(underReviewInput));
   newSectionCountInput?.addEventListener('input', () => coerceMinZero(newSectionCountInput));
-
-  syncApprovedMax();
 };
 
 const setupSectionsEmptyState = () => {
