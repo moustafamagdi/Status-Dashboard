@@ -1256,13 +1256,13 @@ function buildSvgMarkup(state){
         colsSVG+=`<rect x="${IX}" y="${iy}" width="${IW}" height="${bh}" rx="6" fill="${ch.colorLight}" stroke="${ch.colorStroke}" stroke-width="1.1" filter="url(#shadowLight)"/>`;
         const ccx=IX+13;
         colsSVG+=`<circle cx="${ccx}" cy="${icy}" r="10" fill="${ch.colorFill}"/>`;
-        const cfs=it.count>99?6.5:it.count>9?7.5:8.5;
+        const cfs=it.count>99?8:it.count>9?9:10;
         colsSVG+=`<text x="${ccx}" y="${icy+cfs/2}" text-anchor="middle" fill="#fff" font-size="${cfs}" font-weight="700">${it.count}</text>`;
         const tx=IX+28,mw=IW-32;
-        colsSVG+=`<text x="${tx}" y="${iy+12}" fill="#333" font-size="9" font-weight="600">${esc(trunc(it.label,Math.floor(mw/4.8)))}</text>`;
+        colsSVG+=`<text x="${tx}" y="${iy+12}" fill="#333" font-size="11" font-weight="600">${esc(trunc(it.label,Math.floor(mw/4.8)))}</text>`;
         let ly=iy+24;
-        nl.forEach(ln=>{colsSVG+=`<text x="${tx}" y="${ly}" fill="#666" font-size="8" font-weight="400">${esc(ln)}</text>`;ly+=11;});
-        if(hd)colsSVG+=`<text x="${tx}" y="${ly}" fill="#E65100" font-size="8" font-weight="600">📅 ${esc(it.date)}</text>`;
+        nl.forEach(ln=>{colsSVG+=`<text x="${tx}" y="${ly}" fill="#666" font-size="10" font-weight="400">${esc(ln)}</text>`;ly+=11;});
+        if(hd)colsSVG+=`<text x="${tx}" y="${ly}" fill="#E65100" font-size="10" font-weight="600">📅 ${esc(it.date)}</text>`;
         iy+=bh+5;
       });
       if(iy>maxBottom)maxBottom=iy;
