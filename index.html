@@ -238,11 +238,11 @@ header{
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
 .form-group{display:flex;flex-direction:column;gap:3px;}
 .form-group.full{grid-column:1/-1;}
-label{font-size:9px;font-weight:600;color:var(--muted);}
+label{font-size:11px;font-weight:600;color:var(--muted);}
 
 input[type=text],input[type=number],select,textarea{
   background:var(--input-bg);border:1px solid var(--border);border-radius:7px;
-  padding:7px 10px;font-family:'Sora',sans-serif;font-size:12px;
+  padding:7px 10px;font-family:'Sora',sans-serif;font-size:14px;
   color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s,background .25s;width:100%;
   /* FIX: prevent scroll-to-top on focus */
   scroll-margin:0;
@@ -251,8 +251,8 @@ input:focus,select:focus,textarea:focus{
   border-color:var(--accent);
   box-shadow:0 0 0 3px rgba(88,166,255,.12);
 }
-input[type=number]{font-family:'JetBrains Mono',monospace;font-size:13px;}
-textarea{resize:vertical;min-height:44px;font-size:11px;line-height:1.5;}
+input[type=number]{font-family:'JetBrains Mono',monospace;font-size:14px;}
+textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
 
 /* ── CALC BOX ── */
 .calc-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:7px;transition:background .25s;}
@@ -1014,7 +1014,7 @@ function renderItems(secId){
           <input type="number" value="${it.count}"
             oninput="updateItemF('${secId}',${ii},'count',this.value)"
             onkeydown="preventScroll(event)"
-            style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${pal.fill};"/>
+            style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:${pal.fill};"/>
         </div>
         <div class="form-group"><label>Date</label>
           <input type="text" value="${it.date}" placeholder="DD/MM/YYYY"
