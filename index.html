@@ -1205,7 +1205,7 @@ function buildSvgMarkup(state){
   });
 
   const REM_CX=397, REM_BOX_X=307, REM_BOX_W=180;
-  const REM_Y=208, REM_BOTTOM=273, HUB_Y=315;
+  const REM_Y=208, REM_BOTTOM=273, REM_MID_Y=REM_Y+Math.round(65/2), HUB_Y=315;
 
   const allCh=[
     {type:'ur',id:'ur',name:'UNDER REVIEW',colorFill:'#FFB300',colorDark:'#FFA000',
@@ -1336,10 +1336,9 @@ function buildSvgMarkup(state){
 <text x="462" y="139" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">APPROVED ✔</text>
 <text x="462" y="166" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${approved.toLocaleString()}</text>
 <!-- Down to Remaining -->
-<line x1="239" y1="182" x2="239" y2="211" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
-<line x1="239" y1="211" x2="${REM_CX}" y2="211" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
-<line x1="${REM_CX}" y1="211" x2="${REM_CX}" y2="219" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
-<polygon points="${REM_CX-4},219 ${REM_CX},229 ${REM_CX+4},219" fill="#1976D2"/>
+<line x1="239" y1="182" x2="239" y2="${REM_MID_Y}" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<line x1="239" y1="${REM_MID_Y}" x2="${REM_BOX_X}" y2="${REM_MID_Y}" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<polygon points="${REM_BOX_X},${REM_MID_Y-4} ${REM_BOX_X+8},${REM_MID_Y} ${REM_BOX_X},${REM_MID_Y+4}" fill="#1976D2"/>
 
 <!-- REMAINING BOX -->
 <rect x="${REM_BOX_X}" y="${REM_Y}" width="${REM_BOX_W}" height="65" rx="10" fill="url(#remainGrad)" filter="url(#shadow)"/>
