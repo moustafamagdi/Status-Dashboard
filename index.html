@@ -1229,6 +1229,29 @@ function buildSvgMarkup(state){
     <stop offset="0%" stop-color="#FFB300"/><stop offset="100%" stop-color="#FFA000"/>
   </linearGradient>`;
 
+  // Calculate items spacing with responsive A4 fit
+  const A4_HEIGHT=840; // ~297mm in SVG units
+  const MAX_CONTENT_HEIGHT=A4_HEIGHT-150; // Reserve space for header and footer
+  
+  // First pass: calculate total height with generous spacing
+  let totalHeightCalc=HUB_Y+10;
+  allCh.forEach((ch)=>{
+    const BOX_Y=HUB_Y+18, BOX_H=60, BOX_BOT=BOX_Y+BOX_H;
+    if(ch.items&&ch.items.length>0){
+      totalHeightCalc+=55;
+      ch.items.forEach(it=>{
+        const nl=wrap(it.note,Math.floor((COL_W-8)/5.4));
+        const hd=it.date&&it.date.trim();
+        const bh=Math.max(34,20+nl.length*11+(hd?12:0));
+        totalHeightCalc+=bh+12; // Generous spacing
+      });
+    }
+  });
+
+  // Calculate responsive item spacing
+  const itemGapMultiplier=totalHeightCalc>MAX_CONTENT_HEIGHT?Math.max(0.6,MAX_CONTENT_HEIGHT/totalHeightCalc):1;
+  const itemGap=Math.max(5,Math.round(12*itemGapMultiplier));
+
   allCh.forEach((ch,ci)=>{
     const cx=colCX[ci];
     const boxX=cx-Math.round(COL_W/2);
@@ -1263,7 +1286,7 @@ function buildSvgMarkup(state){
         let ly=iy+24;
         nl.forEach(ln=>{colsSVG+=`<text x="${tx}" y="${ly}" fill="#666" font-size="10" font-weight="400">${esc(ln)}</text>`;ly+=11;});
         if(hd)colsSVG+=`<text x="${tx}" y="${ly}" fill="#E65100" font-size="10" font-weight="600">📅 ${esc(it.date)}</text>`;
-        iy+=bh+5;
+        iy+=bh+itemGap;
       });
       if(iy>maxBottom)maxBottom=iy;
     }else{
