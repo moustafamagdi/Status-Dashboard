@@ -1205,7 +1205,7 @@ function buildSvgMarkup(state){
   });
 
   const REM_CX=397, REM_BOX_X=307, REM_BOX_W=180;
-  const REM_Y=188, REM_BOTTOM=253, HUB_Y=295;
+  const REM_Y=208, REM_BOTTOM=273, HUB_Y=315;
 
   const allCh=[
     {type:'ur',id:'ur',name:'UNDER REVIEW',colorFill:'#FFB300',colorDark:'#FFA000',
@@ -1300,23 +1300,23 @@ function buildSvgMarkup(state){
 <line x1="180" y1="85" x2="614" y2="85" stroke="#1976D2" stroke-width="1.5" opacity="0.3"/>
 
 <!-- TOTAL -->
-<rect x="152" y="97" width="175" height="65" rx="10" fill="url(#totalGrad)" filter="url(#shadow)"/>
-<text x="239" y="120" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">TOTAL DRAWINGS</text>
-<text x="239" y="147" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${total.toLocaleString()}</text>
+<rect x="152" y="117" width="175" height="65" rx="10" fill="url(#totalGrad)" filter="url(#shadow)"/>
+<text x="239" y="140" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">TOTAL DRAWINGS</text>
+<text x="239" y="167" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${total.toLocaleString()}</text>
 
 <!-- Arrow -->
-<line x1="327" y1="129.5" x2="360" y2="129.5" stroke="#43A047" stroke-width="1.8" stroke-dasharray="5,3"/>
-<polygon points="360,126 368,129.5 360,133" fill="#43A047"/>
+<line x1="327" y1="149.5" x2="360" y2="149.5" stroke="#43A047" stroke-width="1.8" stroke-dasharray="5,3"/>
+<polygon points="360,146 368,149.5 360,153" fill="#43A047"/>
 
 <!-- APPROVED -->
-<rect x="370" y="97" width="185" height="65" rx="10" fill="url(#approvedGrad)" filter="url(#shadow)"/>
-<text x="462" y="119" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">APPROVED ✔</text>
-<text x="462" y="146" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${approved.toLocaleString()}</text>
+<rect x="370" y="117" width="185" height="65" rx="10" fill="url(#approvedGrad)" filter="url(#shadow)"/>
+<text x="462" y="139" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">APPROVED ✔</text>
+<text x="462" y="166" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${approved.toLocaleString()}</text>
 <!-- Down to Remaining -->
-<line x1="239" y1="162" x2="239" y2="191" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
-<line x1="239" y1="191" x2="${REM_CX}" y2="191" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
-<line x1="${REM_CX}" y1="191" x2="${REM_CX}" y2="199" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
-<polygon points="${REM_CX-4},199 ${REM_CX},209 ${REM_CX+4},199" fill="#1976D2"/>
+<line x1="239" y1="182" x2="239" y2="211" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<line x1="239" y1="211" x2="${REM_CX}" y2="211" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<line x1="${REM_CX}" y1="211" x2="${REM_CX}" y2="219" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
+<polygon points="${REM_CX-4},219 ${REM_CX},229 ${REM_CX+4},219" fill="#1976D2"/>
 
 <!-- REMAINING BOX -->
 <rect x="${REM_BOX_X}" y="${REM_Y}" width="${REM_BOX_W}" height="65" rx="10" fill="url(#remainGrad)" filter="url(#shadow)"/>
