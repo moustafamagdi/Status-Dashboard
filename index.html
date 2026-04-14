@@ -896,34 +896,44 @@ window.addEventListener('beforeunload',e=>{
 // ══════════════════════════════════════
 //  SHARE via URL (base64 encoded JSON)
 // ══════════════════════════════════════
-const SHARE_URL_SHORTENER_ENDPOINT = 'https://is.gd/create.php?format=json';
+const SHARE_URL_SHORTENER_SERVICES = [
+  'https://is.gd/create.php?format=json',
+  'https://v.gd/create.php?format=json',
+];
+
+async function fetchShortenerUrl(serviceEndpoint, longUrl){
+  const response = await fetch(`${serviceEndpoint}&url=${encodeURIComponent(longUrl)}`, {
+    method: 'GET',
+    mode: 'cors',
+    cache: 'no-cache',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Shortener responded ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (result && result.shorturl) {
+    return result.shorturl;
+  }
+
+  throw new Error(result?.errormessage || 'Invalid shortener response');
+}
 
 async function shortenShareURL(longUrl){
-  if(!window.fetch){
+  if (!window.fetch) {
     return longUrl;
   }
 
-  try{
-    const response = await fetch(`${SHARE_URL_SHORTENER_ENDPOINT}&url=${encodeURIComponent(longUrl)}`, {
-      method:'GET',
-      mode:'cors',
-      cache:'no-cache',
-    });
-
-    if(!response.ok){
-      throw new Error(`Shortener responded ${response.status}`);
+  for (const endpoint of SHARE_URL_SHORTENER_SERVICES) {
+    try {
+      return await fetchShortenerUrl(endpoint, longUrl);
+    } catch (error) {
+      console.warn(`Shortener failed for ${endpoint}:`, error);
     }
-
-    const result = await response.json();
-    if(result && result.shorturl){
-      return result.shorturl;
-    }
-
-    throw new Error(result?.errormessage || 'Invalid shortener response');
-  }catch(error){
-    console.warn('URL shortening failed:', error);
-    return longUrl;
   }
+
+  return longUrl;
 }
 
 function openShareModal(){
@@ -934,14 +944,20 @@ function openShareModal(){
   const input = document.getElementById('share-url-input');
   const copyButton = document.getElementById('btn-copy-share-url');
 
-  input.value = 'Generating short link…';
-  copyButton.disabled = true;
+  if (input) {
+    input.value = 'Generating short link…';
+  }
+  if (copyButton) {
+    copyButton.disabled = true;
+  }
   document.getElementById('share-modal').classList.add('open');
 
   shortenShareURL(url).then((shortUrl) => {
-    input.value = shortUrl;
+    if (input) {
+      input.value = shortUrl;
+    }
   }).finally(() => {
-    if(copyButton){
+    if (copyButton) {
       copyButton.disabled = false;
     }
   });
