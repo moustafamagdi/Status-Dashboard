@@ -612,7 +612,7 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
       <button class="btn btn-primary" id="btn-copy-share-url" style="padding:6px 12px;white-space:nowrap;">Copy</button>
     </div>
     <div style="font-size:9px;color:var(--muted);margin-top:10px;line-height:1.6;background:rgba(255,179,0,.06);border:1px solid rgba(255,179,0,.2);border-radius:6px;padding:8px 10px;">
-      <strong style="color:var(--amber);">⚠ Note:</strong> Very large datasets may produce very long URLs. Use JSON export for large transfers.
+      <strong style="color:var(--amber);">⚠ Note:</strong> A shorter link is generated automatically when possible. If shortening fails, the full share URL is shown.
     </div>
     <div class="modal-actions">
       <button class="btn" id="btn-close-share-modal">Close</button>
@@ -896,14 +896,55 @@ window.addEventListener('beforeunload',e=>{
 // ══════════════════════════════════════
 //  SHARE via URL (base64 encoded JSON)
 // ══════════════════════════════════════
+const SHARE_URL_SHORTENER_ENDPOINT = 'https://is.gd/create.php?format=json';
+
+async function shortenShareURL(longUrl){
+  if(!window.fetch){
+    return longUrl;
+  }
+
+  try{
+    const response = await fetch(`${SHARE_URL_SHORTENER_ENDPOINT}&url=${encodeURIComponent(longUrl)}`, {
+      method:'GET',
+      mode:'cors',
+      cache:'no-cache',
+    });
+
+    if(!response.ok){
+      throw new Error(`Shortener responded ${response.status}`);
+    }
+
+    const result = await response.json();
+    if(result && result.shorturl){
+      return result.shorturl;
+    }
+
+    throw new Error(result?.errormessage || 'Invalid shortener response');
+  }catch(error){
+    console.warn('URL shortening failed:', error);
+    return longUrl;
+  }
+}
+
 function openShareModal(){
-  const data=collectState();
-  const json=JSON.stringify(data);
-  // encode to base64
-  const b64=btoa(unescape(encodeURIComponent(json)));
-  const url=`${location.origin}${location.pathname}?shd=${b64}`;
-  document.getElementById('share-url-input').value=url;
+  const data = collectState();
+  const json = JSON.stringify(data);
+  const b64 = btoa(unescape(encodeURIComponent(json)));
+  const url = `${location.origin}${location.pathname}?shd=${b64}`;
+  const input = document.getElementById('share-url-input');
+  const copyButton = document.getElementById('btn-copy-share-url');
+
+  input.value = 'Generating short link…';
+  copyButton.disabled = true;
   document.getElementById('share-modal').classList.add('open');
+
+  shortenShareURL(url).then((shortUrl) => {
+    input.value = shortUrl;
+  }).finally(() => {
+    if(copyButton){
+      copyButton.disabled = false;
+    }
+  });
 }
 function copyShareURL(){
   const inp=document.getElementById('share-url-input');
