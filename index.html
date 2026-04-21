@@ -1099,7 +1099,7 @@ function renderItems(secId){
         </div>
         <div class="form-group"><label>Date</label>
           <input type="text" value="${it.date}" placeholder="DD/MM/YYYY"
-            oninput="updateItemF('${secId}',${ii},'date',this.value)"/>
+            oninput="updateItemF('${secId}',${ii},'date',this.value,this)"/>
         </div>
         <div class="form-group full"><label>Label</label>
           <input type="text" value="${it.label}"
@@ -1200,7 +1200,7 @@ function setItemOrder(id,index,nextOrderRaw){
   autoCalc();
   markDirty();
 }
-function updateItemF(id,i,k,v){
+function updateItemF(id,i,k,v,inputEl){
   const s=sections.find(x=>x.id===id);
   if(!s||!s.items[i])return;
   s.items[i][k]=k==='count'?+v||0:v;
@@ -1211,6 +1211,20 @@ function updateItemF(id,i,k,v){
     // Update badge via parent header
     const header=document.getElementById('body-'+id)?.previousElementSibling;
     if(header){const b=header.querySelector('.sec-count-badge');if(b)b.textContent=secTotal(s);}
+  }
+  if(k==='date'&&inputEl){
+    const row=inputEl.closest('.item-entry');
+    const header=row?.querySelector('.item-header');
+    if(header){
+      const lateBadge=header.querySelector('.late-flag');
+      const lateNow=isLate(v);
+      if(lateNow&&!lateBadge){
+        const numEl=header.querySelector('.item-num');
+        numEl?.insertAdjacentHTML('afterend','<span class="late-flag">OVERDUE</span>');
+      }else if(!lateNow&&lateBadge){
+        lateBadge.remove();
+      }
+    }
   }
   // Debounce SVG/calc regeneration so typing is smooth
   clearTimeout(window._calcTimer);
