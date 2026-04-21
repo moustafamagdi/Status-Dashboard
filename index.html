@@ -1099,7 +1099,7 @@ function renderItems(secId){
         </div>
         <div class="form-group"><label>Date</label>
           <input type="text" value="${it.date}" placeholder="DD/MM/YYYY"
-            oninput="updateItemF('${secId}',${ii},'date',this.value)"/>
+            oninput="updateItemF('${secId}',${ii},'date',this.value,this)"/>
         </div>
         <div class="form-group full"><label>Label</label>
           <input type="text" value="${it.label}"
@@ -1116,8 +1116,26 @@ function renderItems(secId){
 function isLate(ds){
   if(!ds||!ds.trim())return false;
   const p=ds.split('/');if(p.length<2)return false;
+  const day=+p[0],month=+p[1];
   const yr=p.length>2?+p[2]:new Date().getFullYear();
-  return new Date(yr,+p[1]-1,+p[0])<new Date();
+  if(!Number.isInteger(day)||!Number.isInteger(month)||!Number.isInteger(yr))return false;
+  const dueDate=new Date(yr,month-1,day);
+  if(Number.isNaN(dueDate.getTime()))return false;
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  // "Today" is not overdue until the day has ended.
+  return dueDate<today;
+}
+function scheduleOverdueRefresh(){
+  clearTimeout(window._overdueRefreshTimer);
+  const now=new Date();
+  const nextMidnight=new Date(now);
+  nextMidnight.setHours(24,0,0,0);
+  const delay=Math.max(nextMidnight-now,1000);
+  window._overdueRefreshTimer=setTimeout(()=>{
+    renderSections();
+    scheduleOverdueRefresh();
+  },delay);
 }
 function toggleSec(id){const s=sections.find(x=>x.id===id);if(s)s.open=!s.open;renderSections();}
 function updateSecName(id,v){
@@ -1182,7 +1200,7 @@ function setItemOrder(id,index,nextOrderRaw){
   autoCalc();
   markDirty();
 }
-function updateItemF(id,i,k,v){
+function updateItemF(id,i,k,v,inputEl){
   const s=sections.find(x=>x.id===id);
   if(!s||!s.items[i])return;
   s.items[i][k]=k==='count'?+v||0:v;
@@ -1193,6 +1211,20 @@ function updateItemF(id,i,k,v){
     // Update badge via parent header
     const header=document.getElementById('body-'+id)?.previousElementSibling;
     if(header){const b=header.querySelector('.sec-count-badge');if(b)b.textContent=secTotal(s);}
+  }
+  if(k==='date'&&inputEl){
+    const row=inputEl.closest('.item-entry');
+    const header=row?.querySelector('.item-header');
+    if(header){
+      const lateBadge=header.querySelector('.late-flag');
+      const lateNow=isLate(v);
+      if(lateNow&&!lateBadge){
+        const numEl=header.querySelector('.item-num');
+        numEl?.insertAdjacentHTML('afterend','<span class="late-flag">OVERDUE</span>');
+      }else if(!lateNow&&lateBadge){
+        lateBadge.remove();
+      }
+    }
   }
   // Debounce SVG/calc regeneration so typing is smooth
   clearTimeout(window._calcTimer);
@@ -1878,6 +1910,7 @@ window.addEventListener('load',async ()=>{
     applyState(state);
     renderSections();
     autoCalc();
+    scheduleOverdueRefresh();
 
   }catch(e){
     console.error('Failed to initialize Store:',e);
