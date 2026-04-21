@@ -294,7 +294,18 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
 .item-header{display:flex;align-items:center;gap:5px;margin-bottom:6px;}
 .color-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .item-num{font-size:9px;font-weight:600;color:var(--muted);}
-.remove-btn{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.item-order-controls{display:flex;align-items:center;gap:4px;margin-left:auto;}
+.item-order-input{
+  width:44px;padding:3px 4px;border-radius:4px;border:1px solid var(--border);
+  background:var(--input-bg);color:var(--text);font-size:9px;font-family:'JetBrains Mono',monospace;text-align:center;
+}
+.item-order-btn{
+  width:20px;height:20px;border-radius:4px;border:1px solid var(--border);
+  background:var(--card);color:var(--muted);cursor:pointer;font-size:10px;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+}
+.item-order-btn:hover{color:var(--accent);border-color:var(--accent);}
+.remove-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
 .remove-btn:hover{background:rgba(229,57,53,.15);color:var(--red);}
 .late-flag{font-size:7px;font-weight:700;color:var(--red);background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.25);border-radius:3px;padding:1px 4px;}
 
@@ -1064,6 +1075,19 @@ function renderItems(secId){
         <div class="color-dot" style="background:${pal.fill};"></div>
         <span class="item-num">#${ii+1}</span>
         ${late?'<span class="late-flag">OVERDUE</span>':''}
+        <div class="item-order-controls">
+          <button class="item-order-btn" title="Move up" onclick="moveItem('${secId}',${ii},-1)">↑</button>
+          <button class="item-order-btn" title="Move down" onclick="moveItem('${secId}',${ii},1)">↓</button>
+          <input
+            class="item-order-input"
+            type="number"
+            min="1"
+            max="${sec.items.length}"
+            value="${ii+1}"
+            title="Set order number"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();setItemOrder('${secId}',${ii},this.value);}"
+            onblur="setItemOrder('${secId}',${ii},this.value)"/>
+        </div>
         <button class="remove-btn" onclick="removeItem('${secId}',${ii})">✕</button>
       </div>
       <div class="form-row">
@@ -1124,6 +1148,36 @@ function addItem(id){
 function removeItem(id,i){
   const s=sections.find(x=>x.id===id);
   if(s)s.items.splice(i,1);
+  renderItems(id);
+  autoCalc();
+  markDirty();
+}
+function moveItem(id,index,direction){
+  const s=sections.find(x=>x.id===id);
+  if(!s||!Array.isArray(s.items))return;
+  const target=index+direction;
+  if(target<0||target>=s.items.length)return;
+  [s.items[index],s.items[target]]=[s.items[target],s.items[index]];
+  renderItems(id);
+  autoCalc();
+  markDirty();
+}
+function setItemOrder(id,index,nextOrderRaw){
+  const s=sections.find(x=>x.id===id);
+  if(!s||!Array.isArray(s.items)||!s.items[index])return;
+  const max=s.items.length;
+  const parsed=Number.parseInt(nextOrderRaw,10);
+  if(Number.isNaN(parsed)){
+    renderItems(id);
+    return;
+  }
+  const target=Math.max(1,Math.min(max,parsed))-1;
+  if(target===index){
+    renderItems(id);
+    return;
+  }
+  const [item]=s.items.splice(index,1);
+  s.items.splice(target,0,item);
   renderItems(id);
   autoCalc();
   markDirty();
