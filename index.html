@@ -71,7 +71,7 @@ header{
 @media(max-width:480px){
   header{
     height:auto;min-height:52px;flex-wrap:wrap;
-  }
+  }else if(summary){summary.textContent='Validation errors cleared.';}
 }
 .logo{display:flex;align-items:center;gap:9px;}
 .logo-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--accent));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
@@ -412,11 +412,11 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
   </div>
   <div class="hdr-right">
     <div class="save-badge"><div class="save-dot" id="save-dot"></div><span id="save-label">Saved</span></div>
-    <button id="btn-undo" class="btn" title="Undo (Ctrl+Z)" disabled>↩</button>
-    <button id="btn-redo" class="btn" title="Redo (Ctrl+Y)" disabled>↪</button>
+    <button id="btn-undo" class="btn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>↩</button>
+    <button id="btn-redo" class="btn" title="Redo (Ctrl+Y)" aria-label="Redo" disabled>↪</button>
     <button id="manual-save-btn" class="btn btn-primary" title="Save (Ctrl+S)" style="display:none;padding:5px 11px;">💾 Save</button>
     <button id="autosave-btn" class="btn" title="Toggle auto-save" style="padding:5px 11px;color:var(--green);">⚡ Auto-Save</button>
-    <div class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">
+    <div class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode" role="button" tabindex="0" aria-label="Toggle theme">
       <span class="theme-icon" id="theme-icon">🌙</span>
       <span class="theme-label" id="theme-label">Dark</span>
     </div>
@@ -501,6 +501,7 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
           <span class="calc-val" id="disp-pct" style="color:var(--green);">75.5%</span>
         </div>
         <div class="calc-formula" id="calc-formula">Remaining = Under Review + sections</div>
+        <div id="validation-summary" aria-live="polite" aria-atomic="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden;"></div>
       </div>
 
       <div class="divider"></div>
@@ -568,8 +569,8 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
 
 <!-- ADD SECTION MODAL -->
 <div class="modal-overlay" id="modal-overlay">
-  <div class="modal">
-    <h3>Add Section</h3>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="add-section-title">
+    <h3 id="add-section-title">Add Section</h3>
     <div class="form-group" style="margin-bottom:9px;"><label>Section Name</label>
       <input type="text" id="new-sec-name" placeholder="e.g. Code C, On Hold, Rejected…"/>
     </div>
@@ -588,9 +589,9 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
 
 <!-- VERSIONS MODAL -->
 <div class="modal-overlay" id="versions-modal">
-  <div class="modal" style="width:480px;max-height:80vh;display:flex;flex-direction:column;">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="versions-title" style="width:480px;max-height:80vh;display:flex;flex-direction:column;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-      <h3 style="margin:0;">🗂 Saved Versions</h3>
+      <h3 id="versions-title" style="margin:0;">🗂 Saved Versions</h3>
       <span id="ver-count-label" style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;"></span>
     </div>
     <div class="ver-count-bar"><div class="ver-count-fill" id="ver-count-fill"></div></div>
@@ -612,8 +613,8 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
 
 <!-- SHARE MODAL -->
 <div class="modal-overlay" id="share-modal">
-  <div class="modal" style="width:440px;">
-    <h3>🔗 Share Dashboard</h3>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="share-title" style="width:440px;">
+    <h3 id="share-title">🔗 Share Dashboard</h3>
     <p style="font-size:10px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
       Current data is encoded into a shareable URL. The recipient can view it in read-only mode, or <strong style="color:var(--text);">import it into their own Versions</strong>.
     </p>
@@ -673,6 +674,13 @@ function updateThemeBtn(t){
   const lbl=document.getElementById('theme-label');
   if(icon)icon.textContent=t==='dark'?'🌙':'☀️';
   if(lbl)lbl.textContent=t==='dark'?'Dark':'Light';
+}
+
+const themeToggle=document.getElementById('theme-toggle');
+if(themeToggle){
+  themeToggle.addEventListener('keydown',event=>{
+    if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTheme();}
+  });
 }
 
 // ══════════════════════════════════════
@@ -873,6 +881,7 @@ function applyState(d){
  * Phase 2.3: Display validation errors for inputs
  */
 function displayValidationErrors(validationResult){
+  const summary=document.getElementById('validation-summary');
   const errorMap={'total':'#err-total','approved':'#err-approved','underReview':'#err-ur'};
   // Clear all errors first
   Object.values(errorMap).forEach(id=>{
@@ -881,6 +890,7 @@ function displayValidationErrors(validationResult){
   });
   // Show new errors
   if(validationResult.errors&&validationResult.errors.length>0){
+    if(summary){summary.textContent=`${validationResult.errors.length} validation error${validationResult.errors.length===1?'':'s'} found.`;} 
     validationResult.errors.forEach(err=>{
       const errId=errorMap[err.field];
       if(errId){
@@ -961,7 +971,11 @@ function openShareModal(){
   if (copyButton) {
     copyButton.disabled = true;
   }
-  document.getElementById('share-modal').classList.add('open');
+  previousModalFocus=document.activeElement;
+  const shareModal=document.getElementById('share-modal');
+  shareModal.classList.add('open');
+  if(activeModalFocusTrap)activeModalFocusTrap();
+  activeModalFocusTrap=trapModalFocus(shareModal);
 
   shortenShareURL(url).then((shortUrl) => {
     if (input) {
@@ -1050,7 +1064,7 @@ function renderSections(){
           onclick="event.stopPropagation()" oninput="updateSecName('${sec.id}',this.value)"/>
         <div class="sec-count-badge" style="color:${pal.fill};">${tot}</div>
         <span class="sec-toggle ${sec.open?'open':''}">▾</span>
-        <button class="sec-remove" onclick="event.stopPropagation();removeSec('${sec.id}')">✕</button>
+        <button class="sec-remove" aria-label="Remove section ${esc(sec.name)}" onclick="event.stopPropagation();removeSec('${sec.id}')">✕</button>
       </div>
       <div class="custom-section-body ${sec.open?'':'hidden'}" id="body-${sec.id}">
         <div id="items-${sec.id}" style="display:flex;flex-direction:column;gap:5px;"></div>
@@ -1076,8 +1090,8 @@ function renderItems(secId){
         <span class="item-num">#${ii+1}</span>
         ${late?'<span class="late-flag">OVERDUE</span>':''}
         <div class="item-order-controls">
-          <button class="item-order-btn" title="Move up" onclick="moveItem('${secId}',${ii},-1)">↑</button>
-          <button class="item-order-btn" title="Move down" onclick="moveItem('${secId}',${ii},1)">↓</button>
+          <button class="item-order-btn" aria-label="Move item ${ii+1} up" title="Move up" onclick="moveItem('${secId}',${ii},-1)">↑</button>
+          <button class="item-order-btn" aria-label="Move item ${ii+1} down" title="Move down" onclick="moveItem('${secId}',${ii},1)">↓</button>
           <input
             class="item-order-input"
             type="number"
@@ -1088,7 +1102,7 @@ function renderItems(secId){
             onkeydown="if(event.key==='Enter'){event.preventDefault();setItemOrder('${secId}',${ii},this.value);}"
             onblur="setItemOrder('${secId}',${ii},this.value)"/>
         </div>
-        <button class="remove-btn" onclick="removeItem('${secId}',${ii})">✕</button>
+        <button class="remove-btn" aria-label="Remove item ${ii+1}" onclick="removeItem('${secId}',${ii})">✕</button>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Count</label>
@@ -1242,10 +1256,56 @@ function openAddSectionModal(){
   document.getElementById('color-picker').innerHTML=
     PALETTE.map(p=>`<div class="color-swatch ${p.id===selectedColor?'active':''}"
       style="background:${p.fill};" title="${p.id}" onclick="selColor('${p.id}')"></div>`).join('');
-  document.getElementById('modal-overlay').classList.add('open');
+  previousModalFocus=document.activeElement;
+  const overlay=document.getElementById('modal-overlay');
+  overlay.classList.add('open');
+  if(activeModalFocusTrap)activeModalFocusTrap();
+  activeModalFocusTrap=trapModalFocus(overlay);
 }
 function selColor(id){selectedColor=id;document.querySelectorAll('.color-swatch').forEach(s=>s.classList.toggle('active',s.title===id));}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+const MODAL_IDS=['modal-overlay','versions-modal','share-modal'];
+let activeModalFocusTrap=null;
+let previousModalFocus=null;
+
+function trapModalFocus(overlay){
+  const modal=overlay?.querySelector('.modal');
+  if(!modal)return ()=>{};
+  const onKeydown=(event)=>{
+    if(event.key==='Escape'){
+      event.preventDefault();
+      closeModal(overlay.id);
+      return;
+    }
+    if(event.key!=='Tab')return;
+    const focusable=Array.from(modal.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')).filter(el=>!el.disabled&&el.offsetParent!==null);
+    if(!focusable.length)return;
+    const first=focusable[0];
+    const last=focusable[focusable.length-1];
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  };
+  modal.addEventListener('keydown',onKeydown);
+  const focusable=Array.from(modal.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')).filter(el=>!el.disabled&&el.offsetParent!==null);
+  (focusable[0]||modal).focus();
+  return ()=>modal.removeEventListener('keydown',onKeydown);
+}
+
+function closeModal(id){
+  const overlay=document.getElementById(id);
+  if(!overlay)return;
+  overlay.classList.remove('open');
+  if(activeModalFocusTrap){activeModalFocusTrap();activeModalFocusTrap=null;}
+  if(previousModalFocus&&typeof previousModalFocus.focus==='function'){previousModalFocus.focus();previousModalFocus=null;}
+}
+
+MODAL_IDS.forEach(modalId=>{
+  const overlay=document.getElementById(modalId);
+  if(!overlay)return;
+  overlay.addEventListener('click',event=>{
+    if(event.target===overlay)closeModal(modalId);
+  });
+});
 function confirmAddSection(){
   const name=document.getElementById('new-sec-name').value.trim()||'New Section';
   sections.push({id:uid(),name,colorId:selectedColor,open:true,items:[]});
@@ -1658,12 +1718,16 @@ function renderVersionList(){
         <div class="ver-meta">${fmtDate(v.ts)} · ${v.data.total||0} total, ${v.data.approved||0} approved</div>
       </div>
       <button class="ver-load" onclick="loadVersion('${v.id}')">Load</button>
-      <button class="ver-del" onclick="deleteVersion('${v.id}')" title="Delete">✕</button>
+      <button class="ver-del" aria-label="Delete version ${esc(v.name)}" onclick="deleteVersion('${v.id}')" title="Delete">✕</button>
     </div>`).join('');
 }
 function openVersionsModal(){
   renderVersionList();
-  document.getElementById('versions-modal').classList.add('open');
+  previousModalFocus=document.activeElement;
+  const versionsModal=document.getElementById('versions-modal');
+  versionsModal.classList.add('open');
+  if(activeModalFocusTrap)activeModalFocusTrap();
+  activeModalFocusTrap=trapModalFocus(versionsModal);
 }
 
 // ══════════════════════════════════════
