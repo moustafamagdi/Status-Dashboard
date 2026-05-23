@@ -377,6 +377,11 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
 .share-url-box input{flex:1;font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);outline:none;}
 .share-url-box input:focus{border-color:var(--accent);}
 .share-note{font-size:9px;color:var(--muted);margin-top:8px;line-height:1.6;}
+.font-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.font-control{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:5px 8px;}
+.font-control label{font-size:9px;margin:0;}
+.font-control button{width:20px;height:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:4px;cursor:pointer;}
+.font-control .val{font-size:10px;min-width:28px;text-align:center;font-family:'JetBrains Mono',monospace;}
 .share-note strong{color:var(--amber);}
 
 /* ── TAB PANELS ── */
@@ -460,7 +465,18 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
             <input type="text" id="proj-title" value="SHOP DRAWING SUBMISSION STATUS"/>
           </div>
           <div class="form-group full"><label>Date / Label</label>
-            <input type="text" id="proj-date" value="2026 Project Status"/>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="text" id="proj-date" value="2026 Project Status"/>
+              <button class="btn" id="btn-today-date" type="button" style="padding:6px 8px;">Today</button>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>Report Font Size</label>
+            <div class="font-controls">
+              <div class="font-control"><label>Header</label><button type="button" onclick="adjustFontScale('header',-0.1)">−</button><span class="val" id="font-header-val">1.0x</span><button type="button" onclick="adjustFontScale('header',0.1)">+</button></div>
+              <div class="font-control"><label>Title</label><button type="button" onclick="adjustFontScale('title',-0.1)">−</button><span class="val" id="font-title-val">1.0x</span><button type="button" onclick="adjustFontScale('title',0.1)">+</button></div>
+              <div class="font-control"><label>Body/Notes</label><button type="button" onclick="adjustFontScale('note',-0.1)">−</button><span class="val" id="font-note-val">1.0x</span><button type="button" onclick="adjustFontScale('note',0.1)">+</button></div>
+            </div>
           </div>
         </div>
       </div>
@@ -835,6 +851,29 @@ function markDirty(){
   }
 }
 
+
+function updateFontScaleUI(){
+  const hv=document.getElementById('font-header-val');
+  const tv=document.getElementById('font-title-val');
+  const nv=document.getElementById('font-note-val');
+  if(hv)hv.textContent=`${fontScale.header.toFixed(1)}x`;
+  if(tv)tv.textContent=`${fontScale.title.toFixed(1)}x`;
+  if(nv)nv.textContent=`${fontScale.note.toFixed(1)}x`;
+}
+function adjustFontScale(type,delta){
+  const current=Number(fontScale[type]||1);
+  const next=Math.max(0.8,Math.min(1.8,Math.round((current+delta)*10)/10));
+  fontScale[type]=next;
+  updateFontScaleUI();
+  markDirty();
+  generateSVG();
+}
+function setTodayDate(){
+  const today=new Date().toISOString().slice(0,10);
+  const input=document.getElementById('proj-date');
+  if(input){input.value=today;markDirty();generateSVG();}
+}
+
 function manualSave(){
   if(isReadonly)return;
   if(globalController)globalController.saveNow();
@@ -857,7 +896,8 @@ function collectState(){
     selectedColor,
     isReadonly,
     reportTimestamp:reportGeneratedAt,
-    sections:safeSections
+    sections:safeSections,
+    fontScale
   };
 }
 function applyState(d){
@@ -870,6 +910,8 @@ function applyState(d){
   selectedColor=d.selectedColor||selectedColor||'red';
   isReadonly=Boolean(d.isReadonly);
   reportGeneratedAt=d.reportTimestamp||reportGeneratedAt||new Date().toISOString();
+  fontScale={header:1,title:1,note:1,...(d.fontScale||{})};
+  updateFontScaleUI();
   sections=(d.sections||[]).map(s=>({
     ...s,
     open:Boolean(s.open),
@@ -917,51 +959,41 @@ window.addEventListener('beforeunload',e=>{
 // ══════════════════════════════════════
 //  SHARE via URL (base64 encoded JSON)
 // ══════════════════════════════════════
-const SHARE_URL_SHORTENER_SERVICES = [
-  'https://is.gd/create.php?format=json',
-  'https://v.gd/create.php?format=json',
-];
-
-async function fetchShortenerUrl(serviceEndpoint, longUrl){
-  const response = await fetch(`${serviceEndpoint}&url=${encodeURIComponent(longUrl)}`, {
-    method: 'GET',
-    mode: 'cors',
-    cache: 'no-cache',
-  });
-
-  if (!response.ok) {
-    throw new Error(`Shortener responded ${response.status}`);
+async function encodeSharedState(data){
+  const json=JSON.stringify(data);
+  if(typeof CompressionStream==='function'){
+    const cs=new CompressionStream('gzip');
+    const writer=cs.writable.getWriter();
+    writer.write(new TextEncoder().encode(json));
+    writer.close();
+    const buf=await new Response(cs.readable).arrayBuffer();
+    const bytes=new Uint8Array(buf);
+    let bin='';bytes.forEach(b=>bin+=String.fromCharCode(b));
+    return {token:btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),fmt:'gz'};
   }
-
-  const result = await response.json();
-  if (result && result.shorturl) {
-    return result.shorturl;
-  }
-
-  throw new Error(result?.errormessage || 'Invalid shortener response');
+  return {token:btoa(unescape(encodeURIComponent(json))),fmt:'b64'};
 }
 
-async function shortenShareURL(longUrl){
-  if (!window.fetch) {
-    return longUrl;
+async function decodeSharedState(token,fmt){
+  if(fmt==='gz'){
+    const b64=token.replace(/-/g,'+').replace(/_/g,'/');
+    const pad='='.repeat((4-b64.length%4)%4);
+    const bin=atob(b64+pad);
+    const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+    const ds=new DecompressionStream('gzip');
+    const writer=ds.writable.getWriter();
+    writer.write(bytes);
+    writer.close();
+    const text=await new Response(ds.readable).text();
+    return JSON.parse(text);
   }
-
-  for (const endpoint of SHARE_URL_SHORTENER_SERVICES) {
-    try {
-      return await fetchShortenerUrl(endpoint, longUrl);
-    } catch (error) {
-      console.warn(`Shortener failed for ${endpoint}:`, error);
-    }
-  }
-
-  return longUrl;
+  return JSON.parse(decodeURIComponent(escape(atob(token))));
 }
 
-function openShareModal(){
+async function openShareModal(){
   const data = collectState();
-  const json = JSON.stringify(data);
-  const b64 = btoa(unescape(encodeURIComponent(json)));
-  const url = `${location.origin}${location.pathname}?shd=${b64}`;
+  const encoded = await encodeSharedState(data);
+  const url = `${location.origin}${location.pathname}?shd=${encoded.token}&fmt=${encoded.fmt}`;
   const input = document.getElementById('share-url-input');
   const copyButton = document.getElementById('btn-copy-share-url');
 
@@ -977,15 +1009,8 @@ function openShareModal(){
   if(activeModalFocusTrap)activeModalFocusTrap();
   activeModalFocusTrap=trapModalFocus(shareModal);
 
-  shortenShareURL(url).then((shortUrl) => {
-    if (input) {
-      input.value = shortUrl;
-    }
-  }).finally(() => {
-    if (copyButton) {
-      copyButton.disabled = false;
-    }
-  });
+  if (input) { input.value = url; }
+  if (copyButton) { copyButton.disabled = false; }
 }
 function copyShareURL(){
   const inp=document.getElementById('share-url-input');
@@ -997,13 +1022,13 @@ function copyShareURL(){
     toast('Link copied!','success');
   });
 }
-function loadFromURL(){
+async function loadFromURL(){
   const params=new URLSearchParams(location.search);
   const shd=params.get('shd');
   if(!shd)return false;
+  const fmt=params.get('fmt')||'b64';
   try{
-    const json=decodeURIComponent(escape(atob(shd)));
-    const d=JSON.parse(json);
+    const d=await decodeSharedState(shd,fmt);
     sharedVersionData=d; // store for "Save to My Versions"
     applyState(d);
     isReadonly=true;
@@ -1465,7 +1490,7 @@ function buildSvgMarkup(state){
     colsSVG+=`<rect x="${boxX}" y="${BOX_Y}" width="${boxW}" height="${BOX_H}" rx="9" fill="url(#${gId})" filter="url(#shadow)"/>`;
     const nfs=ch.name.length>16?8.5:ch.name.length>12?9:10;
     colsSVG+=`<text x="${cx}" y="${BOX_Y+21}" text-anchor="middle" fill="#fff" font-size="${nfs}" font-weight="600" opacity="0.9">${esc(ch.name)}</text>`;
-    colsSVG+=`<text x="${cx}" y="${BOX_Y+48}" text-anchor="middle" fill="#fff" font-size="20" font-weight="800">${ch.count.toLocaleString()}</text>`;
+    colsSVG+=`<text x="${cx}" y="${BOX_Y+48}" text-anchor="middle" fill="#fff" font-size="${Math.round(20*fontScale.title*10)/10}" font-weight="800">${ch.count.toLocaleString()}</text>`;
 
     hubConn+=`<line x1="${cx}" y1="${HUB_Y}" x2="${cx}" y2="${BOX_Y}" stroke="${ch.colorStroke}" stroke-width="1.8" opacity="0.75"/>`;
     hubConn+=`<polygon points="${cx-3},${BOX_Y-2} ${cx},${BOX_Y+7} ${cx+3},${BOX_Y-2}" fill="${ch.colorFill}"/>`;
@@ -1485,10 +1510,10 @@ function buildSvgMarkup(state){
         const cfs=it.count>99?8:it.count>9?9:10;
         colsSVG+=`<text x="${ccx}" y="${icy+cfs/2}" text-anchor="middle" fill="#fff" font-size="${cfs}" font-weight="700">${it.count}</text>`;
         const tx=IX+28,mw=IW-32;
-        colsSVG+=`<text x="${tx}" y="${iy+12}" fill="#333" font-size="11" font-weight="600">${esc(trunc(it.label,Math.floor(mw/4.8)))}</text>`;
+        colsSVG+=`<text x="${tx}" y="${iy+12}" fill="#333" font-size="${Math.round(11*fontScale.note*10)/10}" font-weight="600">${esc(trunc(it.label,Math.floor(mw/4.8)))}</text>`;
         let ly=iy+24;
-        nl.forEach(ln=>{colsSVG+=`<text x="${tx}" y="${ly}" fill="#666" font-size="10" font-weight="400">${esc(ln)}</text>`;ly+=11;});
-        if(hd)colsSVG+=`<text x="${tx}" y="${ly}" fill="#E65100" font-size="10" font-weight="600">📅 ${esc(it.date)}</text>`;
+        nl.forEach(ln=>{colsSVG+=`<text x="${tx}" y="${ly}" fill="#666" font-size="${Math.round(10*fontScale.note*10)/10}" font-weight="400">${esc(ln)}</text>`;ly+=11;});
+        if(hd)colsSVG+=`<text x="${tx}" y="${ly}" fill="#E65100" font-size="${Math.round(10*fontScale.note*10)/10}" font-weight="600">📅 ${esc(it.date)}</text>`;
         iy+=bh+itemGap;
       });
       if(iy>maxBottom)maxBottom=iy;
@@ -1520,14 +1545,14 @@ function buildSvgMarkup(state){
   </filter>
 </defs>
 <rect width="794" height="${SVG_H}" fill="#ffffff"/>
-<text x="397" y="41" text-anchor="middle" fill="#37474F" font-size="20" font-weight="800" letter-spacing="0.8">${contractor}</text>
-<text x="397" y="63" text-anchor="middle" fill="#1a1a2e" font-size="16" font-weight="700" letter-spacing="1.2">${title}</text>
-<text x="397" y="79" text-anchor="middle" fill="#607D8B" font-size="9.5" font-weight="600">${dateStr}</text>
+<text x="397" y="41" text-anchor="middle" fill="#37474F" font-size="${Math.round(20*fontScale.header*10)/10}" font-weight="800" letter-spacing="0.8">${contractor}</text>
+<text x="397" y="63" text-anchor="middle" fill="#1a1a2e" font-size="${Math.round(16*fontScale.title*10)/10}" font-weight="700" letter-spacing="1.2">${title}</text>
+<text x="397" y="79" text-anchor="middle" fill="#607D8B" font-size="${Math.round(11*fontScale.note*10)/10}" font-weight="600">${dateStr}</text>
 <line x1="180" y1="85" x2="614" y2="85" stroke="#1976D2" stroke-width="1.5" opacity="0.3"/>
 
 <!-- TOTAL -->
 <rect x="152" y="117" width="175" height="65" rx="10" fill="url(#totalGrad)" filter="url(#shadow)"/>
-<text x="239" y="140" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">TOTAL DRAWINGS</text>
+<text x="239" y="140" text-anchor="middle" fill="#fff" font-size="${Math.round(11*fontScale.note*10)/10}" font-weight="600" opacity="0.9">TOTAL DRAWINGS</text>
 <text x="239" y="167" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${total.toLocaleString()}</text>
 
 <!-- Arrow -->
@@ -1536,7 +1561,7 @@ function buildSvgMarkup(state){
 
 <!-- APPROVED -->
 <rect x="370" y="117" width="185" height="65" rx="10" fill="url(#approvedGrad)" filter="url(#shadow)"/>
-<text x="462" y="139" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">APPROVED ✔</text>
+<text x="462" y="139" text-anchor="middle" fill="#fff" font-size="${Math.round(11*fontScale.note*10)/10}" font-weight="600" opacity="0.9">APPROVED ✔</text>
 <text x="462" y="166" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${approved.toLocaleString()}</text>
 <!-- Down to Remaining -->
 <line x1="239" y1="182" x2="239" y2="${REM_MID_Y}" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,4"/>
@@ -1545,7 +1570,7 @@ function buildSvgMarkup(state){
 
 <!-- REMAINING BOX -->
 <rect x="${REM_BOX_X}" y="${REM_Y}" width="${REM_BOX_W}" height="65" rx="10" fill="url(#remainGrad)" filter="url(#shadow)"/>
-<text x="${REM_CX}" y="${REM_Y+20}" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" opacity="0.9">REMAINING</text>
+<text x="${REM_CX}" y="${REM_Y+20}" text-anchor="middle" fill="#fff" font-size="${Math.round(11*fontScale.note*10)/10}" font-weight="600" opacity="0.9">REMAINING</text>
 <text x="${REM_CX}" y="${REM_Y+47}" text-anchor="middle" fill="#fff" font-size="23" font-weight="800">${remaining.toLocaleString()}</text>
 
 <!-- Remaining → Hub → Children -->
@@ -1636,6 +1661,7 @@ function generateSVG(){
 const VER_KEY='shd_versions_v1';
 const VER_MAX=10;
 let sharedVersionData=null; // holds data from URL if in readonly mode
+let fontScale={header:1,title:1,note:1};
 
 function loadVersions(){
   try{return JSON.parse(localStorage.getItem(VER_KEY)||'[]');}catch(e){return[];}
@@ -1894,6 +1920,9 @@ function switchTab(tab){
 let globalController=null;
 
 window.addEventListener('load',async ()=>{
+  document.getElementById('btn-today-date')?.addEventListener('click',setTodayDate);
+  updateFontScaleUI();
+
   // Phase 4.1: Initialize theme management module
   try{
     const{initTheme,toggleTheme:themeToggle}=await import('./js/ui/theme.js');
@@ -1930,7 +1959,7 @@ window.addEventListener('load',async ()=>{
 
     // Priority: URL params > localStorage > default
     let initialState=savedState||{};
-    const fromURL=loadFromURL();
+    const fromURL=await loadFromURL();
     if(fromURL){
       // loadFromURL() populates sharedVersionData; don't load from localStorage
       initialState=sharedVersionData||{};
