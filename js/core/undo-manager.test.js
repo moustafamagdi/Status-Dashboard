@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import { createStore } from '../state/store.js';
 import { UndoManager } from './undo-manager.js';
 

@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import { createStore } from './store.js';
 
 describe('Store', () => {
@@ -49,7 +48,6 @@ describe('Store', () => {
         approved: 75,
         underReview: 20,
         sections: [],
-        sectionOrder: ['ur'],
         selectedColor: 'red',
         isReadonly: false,
       });
