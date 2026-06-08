@@ -519,7 +519,7 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
           <span class="calc-lbl">Remaining</span>
           <span class="calc-val" id="disp-remaining" style="color:#FB8C00;">351</span>
         </div>
-        <div class="calc-row" style="display:none;">
+        <div class="calc-row">
           <span class="calc-lbl">└ Under Review</span>
           <span class="calc-val" id="disp-ur" style="color:#FFB300;">51</span>
         </div>
@@ -534,9 +534,22 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
 
       <div class="divider"></div>
 
+      <!-- UNDER REVIEW -->
+      <div>
+        <div class="sec-label">Under Review <span style="font-size:7px;color:var(--amber);margin-left:3px;">always shown</span></div>
+        <div class="form-group">
+          <label>Count</label>
+          <input type="number" id="val-ur" value="51" min="0" step="1"
+            style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--amber);"/>
+          <div id="err-ur" class="error-message" style="display:none;"></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
       <!-- SECTIONS -->
       <div>
-        <div class="sec-label">Sections <span style="font-size:7px;color:var(--muted);margin-left:3px;">children of Remaining · reorder with numbers or arrows</span></div>
+        <div class="sec-label">Sections <span style="font-size:7px;color:var(--muted);margin-left:3px;">children of Remaining</span></div>
         <div id="sections-empty-state" style="font-size:10px;color:var(--muted);padding:8px 0;">No sections yet. Click “Add Section” to get started.</div>
         <div id="sections-container" style="display:flex;flex-direction:column;gap:7px;"></div>
         <button class="btn-add-section" id="btn-add-section" style="margin-top:7px;">+ Add Section</button>
@@ -739,37 +752,18 @@ let sections=[
   ]},
 ];
 let selectedColor='red';
-let sectionOrder=['ur'];
-let underReviewValue=51;
 let isReadonly=false;
 let reportGeneratedAt=new Date().toISOString();
 
 function uid(){return 's'+Math.random().toString(36).substr(2,8);}
 function secTotal(s){return s.items.reduce((a,i)=>a+i.count,0);}
-function normalizeSectionOrder(){
-  const sectionIds=sections.map(s=>s.id);
-  const knownIds=new Set(['ur',...sectionIds]);
-  const ordered=(Array.isArray(sectionOrder)?sectionOrder:[]).filter(id=>knownIds.has(id));
-  if(!ordered.includes('ur'))ordered.unshift('ur');
-  sectionIds.forEach(id=>{if(!ordered.includes(id))ordered.push(id);});
-  sectionOrder=ordered;
-  return ordered;
-}
-function orderedRemainingEntries(){
-  return normalizeSectionOrder().map(id=>{
-    if(id==='ur')return {type:'ur',id:'ur',name:'Under Review',count:underReviewValue,fill:'#FFB300'};
-    const section=sections.find(s=>s.id===id);
-    return section?{type:'sec',id,section,name:section.name,count:secTotal(section),fill:palOf(section.colorId).fill}:null;
-  }).filter(Boolean);
-}
 
 // ══════════════════════════════════════
 //  CALC
 // ══════════════════════════════════════
 function autoCalc(){
   const approved =Math.max(0,+document.getElementById('val-approved').value||0);
-  const ur       =Math.max(0,+(document.getElementById('val-ur')?.value ?? underReviewValue)||0);
-  underReviewValue=ur;
+  const ur       =Math.max(0,+document.getElementById('val-ur').value      ||0);
   const secSum   =sections.reduce((a,s)=>a+secTotal(s),0);
   const remaining=Math.max(0,ur+secSum);
   const total    =approved+remaining;
@@ -781,15 +775,15 @@ function autoCalc(){
   document.getElementById('disp-ur').textContent=ur.toLocaleString();
   document.getElementById('disp-pct').textContent=pct+'%';
 
-  const remainingParts=orderedRemainingEntries().map(entry=>`${entry.count} (${entry.type==='ur'?'UR':entry.name})`).join(' + ');
+  const secParts=sections.map(s=>`${secTotal(s)} (${s.name})`).join(' + ');
   document.getElementById('calc-formula').innerHTML=
-    `<b>Remaining</b> = ${remainingParts} = ${remaining}<br/>`+
+    `<b>Remaining</b> = ${ur} (UR)${secParts?' + '+secParts:''} = ${remaining}<br/>`+
     `<b>Approval</b> = ${approved} / ${total} = ${pct}%`;
 
-  document.getElementById('sec-calc-rows').innerHTML=orderedRemainingEntries().map(entry=>`
+  document.getElementById('sec-calc-rows').innerHTML=sections.map(s=>`
     <div class="calc-row">
-      <span class="calc-lbl" style="color:${entry.fill};">└ ${esc(entry.name)}</span>
-      <span class="calc-val" style="color:${entry.fill};">${entry.count.toLocaleString()}</span>
+      <span class="calc-lbl" style="color:${palOf(s.colorId).fill};">└ ${esc(s.name)}</span>
+      <span class="calc-val" style="color:${palOf(s.colorId).fill};">${secTotal(s).toLocaleString()}</span>
     </div>`).join('');
 
   if(globalController){
@@ -910,9 +904,8 @@ function collectState(){
     date:    document.getElementById('proj-date').value,
     total:  +document.getElementById('val-total').textContent||0,
     approved:+document.getElementById('val-approved').value||0,
-    underReview:underReviewValue,
+    underReview:+document.getElementById('val-ur').value||0,
     selectedColor,
-    sectionOrder:normalizeSectionOrder(),
     isReadonly,
     reportTimestamp:reportGeneratedAt,
     sections:safeSections,
@@ -925,9 +918,7 @@ function applyState(d){
   document.getElementById('proj-date').value    =d.date    ||'';
   document.getElementById('val-total').textContent=d.total   ||0;
   document.getElementById('val-approved').value =d.approved||0;
-  underReviewValue=d.underReview||d.ur||0;
-  const urInput=document.getElementById('val-ur');
-  if(urInput)urInput.value=underReviewValue;
+  document.getElementById('val-ur').value       =d.underReview||d.ur||0;
   selectedColor=d.selectedColor||selectedColor||'red';
   isReadonly=Boolean(d.isReadonly);
   reportGeneratedAt=d.reportTimestamp||reportGeneratedAt||new Date().toISOString();
@@ -938,8 +929,6 @@ function applyState(d){
     open:Boolean(s.open),
     items:Array.isArray(s.items)?s.items.map(it=>({...it})):[],
   }));
-  sectionOrder=Array.isArray(d.sectionOrder)?[...d.sectionOrder]:['ur',...sections.map(s=>s.id)];
-  normalizeSectionOrder();
 }
 
 /**
@@ -1088,7 +1077,6 @@ function exitReadonly(){
   document.querySelectorAll('input,textarea,button.btn-add,button.btn-add-section,button.section-order-btn').forEach(el=>{
     el.disabled=false;el.style.opacity='';el.style.cursor='';
   });
-  document.querySelectorAll('.under-review-name-input').forEach(el=>{el.disabled=true;});
 
   history.replaceState({},'',location.pathname);
   toast('Now editing shared data as a fresh workspace','success');
@@ -1099,10 +1087,6 @@ function exitReadonly(){
 // ══════════════════════════════════════
 function renderSections(){
   const c=document.getElementById('sections-container');
-  if(!c)return;
-  const currentUr=document.getElementById('val-ur')?.value??underReviewValue;
-  const orderedIds=normalizeSectionOrder();
-  const disabledAttr=isReadonly?'disabled':'';
   c.innerHTML='';
   sections.forEach((sec,si)=>{
     const pal=palOf(sec.colorId);
@@ -1114,7 +1098,6 @@ function renderSections(){
       <div class="custom-section-header" onclick="toggleSec('${sec.id}')">
         <div class="sec-color-dot" style="background:${pal.fill};"></div>
         <input class="sec-name-input" type="text" value="${esc(sec.name)}"
-          ${disabledAttr}
           onclick="event.stopPropagation()" oninput="updateSecName('${sec.id}',this.value)"/>
         <div class="sec-count-badge" style="color:${pal.fill};">${tot}</div>
         <div class="section-order-controls" onclick="event.stopPropagation()">
@@ -1131,11 +1114,11 @@ function renderSections(){
             onblur="setSectionOrder(${si},this.value)"/>
         </div>
         <span class="sec-toggle ${sec.open?'open':''}">▾</span>
-        <button class="sec-remove" aria-label="Remove section ${esc(sec.name)}" ${disabledAttr} onclick="event.stopPropagation();removeSec('${sec.id}')">✕</button>
+        <button class="sec-remove" aria-label="Remove section ${esc(sec.name)}" onclick="event.stopPropagation();removeSec('${sec.id}')">✕</button>
       </div>
       <div class="custom-section-body ${sec.open?'':'hidden'}" id="body-${sec.id}">
         <div id="items-${sec.id}" style="display:flex;flex-direction:column;gap:5px;"></div>
-        <button class="btn-add" ${disabledAttr} onclick="addItem('${sec.id}')">+ Add Item</button>
+        <button class="btn-add" onclick="addItem('${sec.id}')">+ Add Item</button>
       </div>`;
     c.appendChild(div);
     renderItems(sec.id);
@@ -1219,13 +1202,6 @@ function scheduleOverdueRefresh(){
   },delay);
 }
 function toggleSec(id){const s=sections.find(x=>x.id===id);if(s)s.open=!s.open;renderSections();}
-function updateUnderReview(v){
-  underReviewValue=Math.max(0,+v||0);
-  const badge=document.getElementById('val-ur')?.closest('.custom-section')?.querySelector('.sec-count-badge');
-  if(badge)badge.textContent=underReviewValue;
-  clearTimeout(window._calcTimer);
-  window._calcTimer=setTimeout(()=>{autoCalc();markDirty();},150);
-}
 function updateSecName(id,v){
   const s=sections.find(x=>x.id===id);if(s)s.name=v;
   // Update badge only, don't re-render during typing
@@ -1240,38 +1216,6 @@ function updateSecName(id,v){
 }
 function removeSec(id){
   sections=sections.filter(s=>s.id!==id);
-  sectionOrder=normalizeSectionOrder().filter(entryId=>entryId!==id);
-  renderSections();
-  autoCalc();
-  markDirty();
-}
-function moveSection(index,direction){
-  const order=normalizeSectionOrder();
-  const target=index+direction;
-  if(target<0||target>=order.length)return;
-  [order[index],order[target]]=[order[target],order[index]];
-  sectionOrder=order;
-  renderSections();
-  autoCalc();
-  markDirty();
-}
-function setSectionOrder(index,nextOrderRaw){
-  const order=normalizeSectionOrder();
-  if(!order[index])return;
-  const max=order.length;
-  const parsed=Number.parseInt(nextOrderRaw,10);
-  if(Number.isNaN(parsed)){
-    renderSections();
-    return;
-  }
-  const target=Math.max(1,Math.min(max,parsed))-1;
-  if(target===index){
-    renderSections();
-    return;
-  }
-  const [entry]=order.splice(index,1);
-  order.splice(target,0,entry);
-  sectionOrder=order;
   renderSections();
   autoCalc();
   markDirty();
@@ -1442,10 +1386,7 @@ MODAL_IDS.forEach(modalId=>{
 });
 function confirmAddSection(){
   const name=document.getElementById('new-sec-name').value.trim()||'New Section';
-  const section={id:uid(),name,colorId:selectedColor,open:true,items:[]};
-  sections.push(section);
-  normalizeSectionOrder();
-  sectionOrder.push(section.id);
+  sections.push({id:uid(),name,colorId:selectedColor,open:true,items:[]});
   closeModal('modal-overlay');
   renderSections();
   autoCalc();
@@ -1459,13 +1400,14 @@ function confirmAddSection(){
 function updateChart(){
   const total    =+document.getElementById('val-total').textContent||0;
   const approved =+document.getElementById('val-approved').value||0;
-  const ur       =+(document.getElementById('val-ur')?.value ?? underReviewValue)||0;
+  const ur       =+document.getElementById('val-ur').value      ||0;
   const pct=total>0?((approved/total)*100).toFixed(1):'0.0';
   document.getElementById('donut-pct').textContent=pct+'%';
 
   const slices=[
     {label:'Approved',val:approved,fill:'#43A047'},
-    ...orderedRemainingEntries().map(entry=>({label:entry.name,val:entry.count,fill:entry.fill})),
+    {label:'Under Review',val:ur,fill:'#FFB300'},
+    ...sections.map(s=>({label:s.name,val:secTotal(s),fill:palOf(s.colorId).fill})),
   ];
   const sum=slices.reduce((a,s)=>a+s.val,0)||1;
   const R=54,r=32,cx=70,cy=70;
@@ -1546,24 +1488,14 @@ function buildSvgMarkup(state){
   const REM_CX=397, REM_BOX_X=307, REM_BOX_W=180;
   const REM_Y=208, REM_BOTTOM=273, REM_MID_Y=REM_Y+Math.round(65/2), HUB_Y=315;
 
-  const sectionIds=sections.map(s=>s.id);
-  const knownIds=new Set(['ur',...sectionIds]);
-  const reportOrder=(Array.isArray(state.sectionOrder)?state.sectionOrder:sectionOrder).filter(id=>knownIds.has(id));
-  if(!reportOrder.includes('ur'))reportOrder.unshift('ur');
-  sectionIds.forEach(id=>{if(!reportOrder.includes(id))reportOrder.push(id);});
-
-  const allCh=reportOrder.map(id=>{
-    if(id==='ur'){
-      return {type:'ur',id:'ur',name:'UNDER REVIEW',colorFill:'#FFB300',colorDark:'#FFA000',
-        colorLight:'rgba(255,179,0,.07)',colorStroke:'#FFE082',count:ur,items:[]};
-    }
-    const s=sections.find(section=>section.id===id);
-    if(!s)return null;
-    return {type:'sec',id:s.id,name:s.name,
+  const allCh=[
+    {type:'ur',id:'ur',name:'UNDER REVIEW',colorFill:'#FFB300',colorDark:'#FFA000',
+     colorLight:'rgba(255,179,0,.07)',colorStroke:'#FFE082',count:ur,items:[]},
+    ...sections.map(s=>({type:'sec',id:s.id,name:s.name,
       colorFill:palOf(s.colorId).fill,colorDark:palOf(s.colorId).dark,
       colorLight:palOf(s.colorId).light,colorStroke:palOf(s.colorId).stroke,
-      count:secTotal(s),items:s.items};
-  }).filter(Boolean);
+      count:secTotal(s),items:s.items}))
+  ];
   const N=allCh.length;
   const PAGE_L=50,PAGE_R=744,PAGE_W=PAGE_R-PAGE_L;
   const COL_W=Math.min(215,Math.max(130,Math.floor(PAGE_W/N)-10));
@@ -1722,13 +1654,14 @@ function mountSvg(markup){
 function updateChartWidget(){
   const total=+document.getElementById('val-total').textContent||0;
   const approved=+document.getElementById('val-approved').value||0;
-  const ur=+(document.getElementById('val-ur')?.value ?? underReviewValue)||0;
+  const ur=+document.getElementById('val-ur').value||0;
   const pct=total>0?((approved/total)*100).toFixed(1):'0.0';
   document.getElementById('donut-pct').textContent=pct+'%';
 
   const slices=[
     {label:'Approved',val:approved,fill:'#43A047'},
-    ...orderedRemainingEntries().map(entry=>({label:entry.name,val:entry.count,fill:entry.fill})),
+    {label:'Under Review',val:ur,fill:'#FFB300'},
+    ...sections.map(s=>({label:s.name,val:secTotal(s),fill:palOf(s.colorId).fill})),
   ];
   const sum=slices.reduce((a,s)=>a+s.val,0)||1;
   const R=54,r=32,cx=70,cy=70;
@@ -2105,8 +2038,6 @@ window.addEventListener('load',async ()=>{
     globalController.subscribeToState((newState)=>{
       // Update global vars from Store for compatibility
       sections=newState.sections||[];
-      sectionOrder=Array.isArray(newState.sectionOrder)?[...newState.sectionOrder]:sectionOrder;
-      underReviewValue=newState.underReview||0;
       selectedColor=newState.selectedColor||'red';
       isReadonly=newState.isReadonly||false;
       if(!fromURL)applyState(newState);// Don't re-apply URL state to inline vars

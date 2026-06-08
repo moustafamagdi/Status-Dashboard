@@ -87,9 +87,6 @@ export class DataExport {
       approved,
       underReview,
       sections,
-      sectionOrder: Array.isArray(source.sectionOrder)
-        ? [...source.sectionOrder].map((id) => String(id))
-        : ['ur'],
       selectedColor: this.#toSafeString(source.selectedColor || 'red'),
       isReadonly: Boolean(source.isReadonly),
     };
