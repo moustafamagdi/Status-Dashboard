@@ -1104,50 +1104,7 @@ function renderSections(){
   const orderedIds=normalizeSectionOrder();
   const disabledAttr=isReadonly?'disabled':'';
   c.innerHTML='';
-
-  orderedIds.forEach((entryId,orderIndex)=>{
-    if(entryId==='ur'){
-      const urCount=Math.max(0,+currentUr||0);
-      const div=document.createElement('div');
-      div.className='custom-section';
-      div.style.borderColor='rgba(255,179,0,.45)';
-      div.innerHTML=`
-        <div class="custom-section-header">
-          <div class="sec-color-dot" style="background:#FFB300;"></div>
-          <input class="sec-name-input under-review-name-input" type="text" value="Under Review" disabled/>
-          <div class="sec-count-badge" style="color:#FFB300;">${urCount}</div>
-          <div class="section-order-controls" onclick="event.stopPropagation()">
-            <button class="section-order-btn" aria-label="Move Under Review up" title="Move Under Review up" ${orderIndex===0||isReadonly?'disabled':''} onclick="moveSection(${orderIndex},-1)">↑</button>
-            <button class="section-order-btn" aria-label="Move Under Review down" title="Move Under Review down" ${orderIndex===orderedIds.length-1||isReadonly?'disabled':''} onclick="moveSection(${orderIndex},1)">↓</button>
-            <input
-              class="section-order-input"
-              type="number"
-              min="1"
-              max="${orderedIds.length}"
-              value="${orderIndex+1}"
-              title="Set Under Review order number"
-              ${disabledAttr}
-              onkeydown="if(event.key==='Enter'){event.preventDefault();setSectionOrder(${orderIndex},this.value);}"
-              onblur="setSectionOrder(${orderIndex},this.value)"/>
-          </div>
-        </div>
-        <div class="custom-section-body">
-          <div class="form-group">
-            <label>Count</label>
-            <input type="number" id="val-ur" value="${urCount}" min="0" step="1"
-              ${disabledAttr}
-              oninput="updateUnderReview(this.value)"
-              onkeydown="preventScroll(event)"
-              style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--amber);"/>
-            <div id="err-ur" class="error-message" style="display:none;"></div>
-          </div>
-        </div>`;
-      c.appendChild(div);
-      return;
-    }
-
-    const sec=sections.find(s=>s.id===entryId);
-    if(!sec)return;
+  sections.forEach((sec,si)=>{
     const pal=palOf(sec.colorId);
     const tot=secTotal(sec);
     const div=document.createElement('div');
@@ -1161,18 +1118,17 @@ function renderSections(){
           onclick="event.stopPropagation()" oninput="updateSecName('${sec.id}',this.value)"/>
         <div class="sec-count-badge" style="color:${pal.fill};">${tot}</div>
         <div class="section-order-controls" onclick="event.stopPropagation()">
-          <button class="section-order-btn" aria-label="Move section ${orderIndex+1} up" title="Move section up" ${orderIndex===0||isReadonly?'disabled':''} onclick="moveSection(${orderIndex},-1)">↑</button>
-          <button class="section-order-btn" aria-label="Move section ${orderIndex+1} down" title="Move section down" ${orderIndex===orderedIds.length-1||isReadonly?'disabled':''} onclick="moveSection(${orderIndex},1)">↓</button>
+          <button class="section-order-btn" aria-label="Move section ${si+1} up" title="Move section up" ${si===0?'disabled':''} onclick="moveSection(${si},-1)">↑</button>
+          <button class="section-order-btn" aria-label="Move section ${si+1} down" title="Move section down" ${si===sections.length-1?'disabled':''} onclick="moveSection(${si},1)">↓</button>
           <input
             class="section-order-input"
             type="number"
             min="1"
-            max="${orderedIds.length}"
-            value="${orderIndex+1}"
+            max="${sections.length}"
+            value="${si+1}"
             title="Set section order number"
-            ${disabledAttr}
-            onkeydown="if(event.key==='Enter'){event.preventDefault();setSectionOrder(${orderIndex},this.value);}"
-            onblur="setSectionOrder(${orderIndex},this.value)"/>
+            onkeydown="if(event.key==='Enter'){event.preventDefault();setSectionOrder(${si},this.value);}"
+            onblur="setSectionOrder(${si},this.value)"/>
         </div>
         <span class="sec-toggle ${sec.open?'open':''}">▾</span>
         <button class="sec-remove" aria-label="Remove section ${esc(sec.name)}" ${disabledAttr} onclick="event.stopPropagation();removeSec('${sec.id}')">✕</button>
@@ -1316,6 +1272,34 @@ function setSectionOrder(index,nextOrderRaw){
   const [entry]=order.splice(index,1);
   order.splice(target,0,entry);
   sectionOrder=order;
+  renderSections();
+  autoCalc();
+  markDirty();
+}
+function moveSection(index,direction){
+  if(!Array.isArray(sections))return;
+  const target=index+direction;
+  if(target<0||target>=sections.length)return;
+  [sections[index],sections[target]]=[sections[target],sections[index]];
+  renderSections();
+  autoCalc();
+  markDirty();
+}
+function setSectionOrder(index,nextOrderRaw){
+  if(!Array.isArray(sections)||!sections[index])return;
+  const max=sections.length;
+  const parsed=Number.parseInt(nextOrderRaw,10);
+  if(Number.isNaN(parsed)){
+    renderSections();
+    return;
+  }
+  const target=Math.max(1,Math.min(max,parsed))-1;
+  if(target===index){
+    renderSections();
+    return;
+  }
+  const [section]=sections.splice(index,1);
+  sections.splice(target,0,section);
   renderSections();
   autoCalc();
   markDirty();
