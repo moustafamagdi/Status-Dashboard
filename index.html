@@ -282,6 +282,18 @@ textarea{resize:vertical;min-height:44px;font-size:13px;line-height:1.5;}
 .sec-color-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .sec-name-input{flex:1;background:transparent;border:none;color:var(--text);font-family:'Sora',sans-serif;font-size:11px;font-weight:600;outline:none;}
 .sec-count-badge{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(128,128,128,.12);}
+.section-order-controls{display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0;}
+.section-order-input{
+  width:44px;padding:3px 4px;border-radius:4px;border:1px solid var(--border);
+  background:var(--input-bg);color:var(--text);font-size:9px;font-family:'JetBrains Mono',monospace;text-align:center;
+}
+.section-order-btn{
+  width:20px;height:20px;border-radius:4px;border:1px solid var(--border);
+  background:var(--card);color:var(--muted);cursor:pointer;font-size:10px;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+}
+.section-order-btn:hover:not(:disabled){color:var(--accent);border-color:var(--accent);}
+.section-order-btn:disabled{opacity:.35;cursor:not-allowed;}
 .sec-toggle{color:var(--muted);font-size:10px;transition:transform .2s;flex-shrink:0;}
 .sec-toggle.open{transform:rotate(180deg);}
 .sec-remove{color:var(--muted);background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:3px;transition:all .2s;flex-shrink:0;}
@@ -1036,7 +1048,7 @@ async function loadFromURL(){
     // Show the readonly action buttons
     document.getElementById('btn-consume-shared').style.display='flex';
     document.getElementById('btn-exit-readonly').style.display='flex';
-    document.querySelectorAll('input,textarea,button.btn-add,button.btn-add-section').forEach(el=>{
+    document.querySelectorAll('input,textarea,button.btn-add,button.btn-add-section,button.section-order-btn').forEach(el=>{
       el.disabled=true;el.style.opacity='.6';el.style.cursor='not-allowed';
     });
     return true;
@@ -1062,7 +1074,7 @@ function exitReadonly(){
 
   document.getElementById('readonly-banner').classList.remove('show');
   // FIX: iterate freshly-rendered DOM, not stale pre-render snapshot
-  document.querySelectorAll('input,textarea,button.btn-add,button.btn-add-section').forEach(el=>{
+  document.querySelectorAll('input,textarea,button.btn-add,button.btn-add-section,button.section-order-btn').forEach(el=>{
     el.disabled=false;el.style.opacity='';el.style.cursor='';
   });
 
@@ -1076,7 +1088,7 @@ function exitReadonly(){
 function renderSections(){
   const c=document.getElementById('sections-container');
   c.innerHTML='';
-  sections.forEach((sec)=>{
+  sections.forEach((sec,si)=>{
     const pal=palOf(sec.colorId);
     const tot=secTotal(sec);
     const div=document.createElement('div');
@@ -1088,6 +1100,19 @@ function renderSections(){
         <input class="sec-name-input" type="text" value="${esc(sec.name)}"
           onclick="event.stopPropagation()" oninput="updateSecName('${sec.id}',this.value)"/>
         <div class="sec-count-badge" style="color:${pal.fill};">${tot}</div>
+        <div class="section-order-controls" onclick="event.stopPropagation()">
+          <button class="section-order-btn" aria-label="Move section ${si+1} up" title="Move section up" ${si===0?'disabled':''} onclick="moveSection(${si},-1)">↑</button>
+          <button class="section-order-btn" aria-label="Move section ${si+1} down" title="Move section down" ${si===sections.length-1?'disabled':''} onclick="moveSection(${si},1)">↓</button>
+          <input
+            class="section-order-input"
+            type="number"
+            min="1"
+            max="${sections.length}"
+            value="${si+1}"
+            title="Set section order number"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();setSectionOrder(${si},this.value);}"
+            onblur="setSectionOrder(${si},this.value)"/>
+        </div>
         <span class="sec-toggle ${sec.open?'open':''}">▾</span>
         <button class="sec-remove" aria-label="Remove section ${esc(sec.name)}" onclick="event.stopPropagation();removeSec('${sec.id}')">✕</button>
       </div>
@@ -1191,6 +1216,34 @@ function updateSecName(id,v){
 }
 function removeSec(id){
   sections=sections.filter(s=>s.id!==id);
+  renderSections();
+  autoCalc();
+  markDirty();
+}
+function moveSection(index,direction){
+  if(!Array.isArray(sections))return;
+  const target=index+direction;
+  if(target<0||target>=sections.length)return;
+  [sections[index],sections[target]]=[sections[target],sections[index]];
+  renderSections();
+  autoCalc();
+  markDirty();
+}
+function setSectionOrder(index,nextOrderRaw){
+  if(!Array.isArray(sections)||!sections[index])return;
+  const max=sections.length;
+  const parsed=Number.parseInt(nextOrderRaw,10);
+  if(Number.isNaN(parsed)){
+    renderSections();
+    return;
+  }
+  const target=Math.max(1,Math.min(max,parsed))-1;
+  if(target===index){
+    renderSections();
+    return;
+  }
+  const [section]=sections.splice(index,1);
+  sections.splice(target,0,section);
   renderSections();
   autoCalc();
   markDirty();
