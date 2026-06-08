@@ -6,6 +6,7 @@ const DEFAULT_STATE = Object.freeze({
   approved: 0,
   underReview: 0,
   sections: [],
+  sectionOrder: ['ur'],
   selectedColor: 'red',
   isReadonly: false,
 });
@@ -63,6 +64,9 @@ export class Store {
       sections: Array.isArray(candidate.sections)
         ? [...candidate.sections]
         : candidate.sections ?? [],
+      sectionOrder: Array.isArray(candidate.sectionOrder)
+        ? [...candidate.sectionOrder].map((id) => String(id))
+        : ['ur'],
       selectedColor: this.#toSafeString(candidate.selectedColor || 'red'),
       isReadonly: Boolean(candidate.isReadonly),
     };
@@ -85,6 +89,7 @@ export class Store {
     return {
       ...source,
       sections: [...source.sections],
+      sectionOrder: [...source.sectionOrder],
     };
   }
 
@@ -98,6 +103,8 @@ export class Store {
       left.underReview === right.underReview &&
       left.selectedColor === right.selectedColor &&
       left.isReadonly === right.isReadonly &&
+      left.sectionOrder.length === right.sectionOrder.length &&
+      left.sectionOrder.every((item, index) => item === right.sectionOrder[index]) &&
       left.sections.length === right.sections.length &&
       left.sections.every((item, index) => item === right.sections[index])
     );
